@@ -1,0 +1,3 @@
+# Keep Unix line endings everywhere. Without this, Windows checkouts turn
+# start.sh into a file the Linux containers can't run.
+* text=auto eol=lf

@@ -1,0 +1,54 @@
+# Runs the whole project with one command:   docker compose up
+# Then open http://localhost:3000
+
+services:
+  # PostgreSQL database. Your data lives in the db-data volume, so it survives restarts.
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: unitres
+      POSTGRES_PASSWORD: unitres
+      POSTGRES_DB: unitres
+    ports:
+      - "5433:5432" # 5433 on your laptop, in case you already have Postgres installed
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unitres -d unitres"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  # FastAPI backend at http://localhost:8000 (try it at http://localhost:8000/docs)
+  api:
+    build: ./backend
+    env_file:
+      - path: .env
+        required: false # only Payments and Accounts need keys in week 1
+    environment:
+      DATABASE_URL: postgresql+psycopg://unitres:unitres@db:5432/unitres
+      WATCHFILES_FORCE_POLLING: "true" # so saving a .py file restarts the API on every laptop
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # React website at http://localhost:3000
+  web:
+    build: ./frontend
+    environment:
+      API_URL: http://api:8000
+      WATCH_POLLING: "true" # so saving a file updates the page on every laptop
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # keep the container's own packages, not your laptop's
+    depends_on:
+      - api
+
+volumes:
+  db-data:

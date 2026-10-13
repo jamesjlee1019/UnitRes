@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Colors from the kickoff deck. Use them like any Tailwind color:
+   bg-cream, text-ink, bg-brand, border-line, text-muted, and so on. */
+@theme {
+  --color-cream: #f3eee6;
+  --color-paper: #faf8f3;
+  --color-ink: #1c1a17;
+  --color-muted: #6b665e;
+  --color-line: #d9d2c5;
+  --color-brand: #ff5a1f;
+  --color-brand-dark: #d9440f;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+body {
+  @apply bg-cream text-ink antialiased;
+}
