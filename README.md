@@ -2,9 +2,6 @@
 
 A website where students reserve an apartment by paying an application fee.
 
-React + TypeScript + Tailwind in front, FastAPI + PostgreSQL behind, all running in Docker
-so everyone's laptop runs the same thing.
-
 ## Set up (once)
 
 1. **Install two things**
