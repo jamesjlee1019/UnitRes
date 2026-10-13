@@ -42,7 +42,6 @@ Each of those files starts with a comment saying what to build, with `TODO` wher
 Two files are working examples to copy from: the `/health` route in `backend/app/main.py`
 (reading the database) and `frontend/src/pages/HomePage.tsx` (loading data on a page).
 
-Also bring your team's written answer to its hard question from the kickoff.
 
 ## Everyday commands
 
@@ -107,7 +106,7 @@ cp .env.example .env
 ```
 
 Fill in your team's lines, then stop (`Ctrl+C`) and run `docker compose up` again.
-`.env` is ignored by Git, so keys stay on your laptop. Don't post them in the group chat.
+`.env` is ignored by Git, so keys stay on your laptop.
 
 - **Payments:** make a free Stripe account. Test mode works right away, with no business details
   needed. Your test secret key starts with `sk_test_` and is at
@@ -128,27 +127,3 @@ git push -u origin booking/apartment-list
 Then open a pull request into `main` on GitHub and have a teammate look it over before merging.
 Keep pull requests small and merge often. A goal counts as done once it works on `main`.
 
-## Changing the schema
-
-Talk to James first, since every team reads these tables. Then:
-
-1. Edit `backend/app/models.py`.
-2. Generate a migration:
-   `docker compose exec api alembic revision --autogenerate -m "add users table"`
-3. Read the new file in `backend/alembic/versions/`. Autogenerate can miss things.
-4. Restart. Everyone else's database picks up the change when they pull and run `docker compose up`.
-
-## When something goes wrong
-
-- **"Cannot connect to the Docker daemon"**: open Docker Desktop and wait for it to finish starting.
-- **"port is already allocated"**: another program is using port 3000, 8000 or 5433. Quit it, or
-  change the first number of that port in `docker-compose.yml`.
-- **The setup check shows a ✕**: look at `docker compose logs -f api`. The last error is usually the answer.
-- **Weird errors after pulling someone's changes**: run `docker compose up --build`.
-- **Your database is in a strange state**: `docker compose down -v`, then `docker compose up`.
-  This deletes your local data and reloads the sample apartments.
-- **Your editor underlines every import in red**: the packages live inside Docker, so your editor can't
-  see them. It doesn't affect running the project. To fix the underlines, run `npm install` in
-  `frontend/` (needs [Node 24](https://nodejs.org/)), and for Python, make a virtual environment in
-  `backend/` and `pip install -r requirements.txt`.
-- **Still stuck after 20 minutes**: ask in the group chat, with the error message and what you ran.
