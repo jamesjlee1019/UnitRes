@@ -8,8 +8,6 @@ A website where students reserve an apartment by paying an application fee.
    - [Git](https://git-scm.com/downloads)
    - [Docker Desktop](https://www.docker.com/products/docker-desktop/). Open it once so it's running.
 
-   On Windows, clone and work inside WSL (the Ubuntu terminal), not in a `C:\` folder.
-   It's much faster there.
 
 2. **Get the code**
 
