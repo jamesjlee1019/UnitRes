@@ -108,11 +108,6 @@ cp .env.example .env
 Fill in your team's lines, then stop (`Ctrl+C`) and run `docker compose up` again.
 `.env` is ignored by Git, so keys stay on your laptop.
 
-- **Payments:** make a free Stripe account. Test mode works right away, with no business details
-  needed. Your test secret key starts with `sk_test_` and is at
-  [dashboard.stripe.com/test/apikeys](https://dashboard.stripe.com/test/apikeys).
-- **Accounts:** ask James for the SendGrid key and the verified sender address.
-  SendGrid's free trial lasts 60 days, so the team shares one account and starts it only when ready to send.
 
 ## Git: how to get your work in
 
