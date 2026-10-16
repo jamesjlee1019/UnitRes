@@ -10,6 +10,8 @@ SendGrid's Python guide: https://www.twilio.com/docs/sendgrid/for-developers/sen
 """
 
 import sys
+import sendgrid
+from sendgrid.helpers.mail import Mail, Email, To, Content
 
 from app.config import settings
 
@@ -28,8 +30,24 @@ def main() -> None:
     # TODO (Accounts, week 1): send `subject` and `body` from settings.from_email
     # to `to_email` with SendGrid, using settings.sendgrid_api_key.
     # Week 2: move the sending into a function the rest of the app can use.
-    print("Not built yet. Accounts team: see backend/scripts/send_test_email.py")
-    print(f"\nThis would go to {to_email}:\n\nSubject: {subject}\n\n{body}")
+
+    # Import API Key
+    sg = sendgrid.SendGridAPIClient(api_key=settings.sendgrid_api_key)
+    # Components of Email
+    from_email = Email(settings.from_email)
+    content = Content("text/plain", body)
+    # Creates a Mail object from components of an email
+    mail = Mail(from_email, To(to_email), subject, content)
+    # Gets JSON representation of mail object
+    mail_json = mail.get()
+    # Sends HTTP POST request to /mail/send
+    response = sg.client.mail.send.post(request_body=mail_json)
+    print(response.status_code)
+    print(response.headers)
+
+
+    # print("Not built yet. Accounts team: see backend/scripts/send_test_email.py")
+    # print(f"\nThis would go to {to_email}:\n\nSubject: {subject}\n\n{body}")
 
 
 if __name__ == "__main__":
