@@ -11,7 +11,7 @@ from fastapi import APIRouter
 from sqlalchemy import select  # noqa: F401  (you'll need these two imports)
 
 from app.db import DbSession
-from app.models import Apartment  # noqa: F401
+from app.models import Apartment
 from app.routers import not_built_yet
 from app.schemas import ApartmentOut, ReservationCreate, ReservationOut
 
@@ -21,11 +21,7 @@ router = APIRouter(tags=["Booking"])
 @router.get("/apartments", response_model=list[ApartmentOut])
 def list_available_apartments(db: DbSession):
     """Give me all available apartments."""
-    # TODO (Booking, week 1): return the apartments where `available` is true.
-    # Something like: db.scalars(select(Apartment).where(...)).all()
-    # The seed data has 5 apartments and 4 are available,
-    # so if your page shows 5, the filter isn't working yet.
-    raise not_built_yet("Booking", "backend/app/routers/booking.py")
+    return db.scalars(select(Apartment).where(Apartment.available.is_(True))).all()
 
 
 @router.post("/reservations", response_model=ReservationOut, status_code=201)
