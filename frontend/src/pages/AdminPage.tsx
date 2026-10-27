@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { api, formatDollars, type Apartment, type NewApartment } from '../api.ts'
 
 /**
@@ -17,7 +17,25 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false)
   const [added, setAdded] = useState<Apartment | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [reservations, setReservations] = useState<Reservation[]>([])
+  const [loadingReservations, setLoadingReservations] = useState(true)
+  const [reservationsError, setReservationsError] = useState<string | null>(null)
 
+  async function loadReservations() {
+    setLoadingReservations(true)
+    setReservationsError(null)
+    try {
+      setReservations(await api<Reservation[]>('/admin/reservations'))
+    } catch (err) {
+      setReservationsError((err as Error).message)
+    } finally {
+      setLoadingReservations(false)
+    }
+  }
+
+  useEffect(() => {
+    loadReservations()
+  }, [])
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSaving(true)
@@ -118,6 +136,40 @@ export default function AdminPage() {
         </p>
       )}
       {error && <p className="mt-4 font-semibold text-brand">Couldn't add it: {error}</p>}
+      <h2 className="mt-10 text-2xl font-bold tracking-tight">Reservations</h2>
+      <button
+        onClick={loadReservations}
+        className="mt-2 text-sm font-semibold underline"
+      >
+        Refresh
+      </button>
+
+      {loadingReservations ? (
+        <p className="mt-4">Loading…</p>
+      ) : reservationsError ? (
+        <p className="mt-4 font-semibold text-brand">Couldn't load reservations: {reservationsError}</p>
+      ) : reservations.length === 0 ? (
+        <p className="mt-4">No reservations yet.</p>
+      ) : (
+        <table className="mt-4 border-2 border-ink bg-paper text-sm">
+          <thead>
+            <tr>
+              {Object.keys(reservations[0]).map((key) => (
+                <th key={key} className="border border-line px-3 py-2 text-left">{key}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {reservations.map((r, i) => (
+              <tr key={i}>
+                {Object.keys(reservations[0]).map((key) => (
+                  <td key={key} className="border border-line px-3 py-2">{String(r[key] ?? '')}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
   )
 }
@@ -132,3 +184,4 @@ function Field(props: { label: string; children: ReactNode }) {
     </label>
   )
 }
+type Reservation = Record<string, unknown>
