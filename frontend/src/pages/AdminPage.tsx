@@ -151,20 +151,23 @@ export default function AdminPage() {
       ) : reservations.length === 0 ? (
         <p className="mt-4">No reservations yet.</p>
       ) : (
-        <table className="mt-4 border-2 border-ink bg-paper text-sm">
+          <table className="mt-4 border-2 border-ink bg-paper text-sm">
           <thead>
             <tr>
-              {Object.keys(reservations[0]).map((key) => (
-                <th key={key} className="border border-line px-3 py-2 text-left">{key}</th>
+              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on'].map((h) => (
+                <th key={h} className="border border-line px-3 py-2 text-left">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {reservations.map((r, i) => (
-              <tr key={i}>
-                {Object.keys(reservations[0]).map((key) => (
-                  <td key={key} className="border border-line px-3 py-2">{String(r[key] ?? '')}</td>
-                ))}
+            {reservations.map((r) => (
+              <tr key={r.id}>
+                <td className="border border-line px-3 py-2">{r.student_name}</td>
+                <td className="border border-line px-3 py-2">{r.student_email}</td>
+                <td className="border border-line px-3 py-2">#{r.apartment_id}</td>
+                <td className="border border-line px-3 py-2">{r.status}</td>
+                <td className="border border-line px-3 py-2">{r.paid ? 'Yes' : 'No'}</td>
+                <td className="border border-line px-3 py-2">{new Date(r.created_at).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>
@@ -184,4 +187,13 @@ function Field(props: { label: string; children: ReactNode }) {
     </label>
   )
 }
-type Reservation = Record<string, unknown>
+type Reservation = {
+  id: number
+  apartment_id: number
+  student_name: string
+  student_email: string
+  paid: boolean
+  status: string
+  expires_at: string | null
+  created_at: string
+}
