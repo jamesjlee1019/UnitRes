@@ -52,3 +52,17 @@ class ReservationOut(BaseModel):
     status: str
     expires_at: datetime | None
     created_at: datetime
+
+class AccountRegister(BaseModel):
+
+    name: str = Field(min_length = 1, max_length=200)
+    email: EmailStr
+    password: str
+
+class AccountOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str 
+    email: str 
+    role: str
