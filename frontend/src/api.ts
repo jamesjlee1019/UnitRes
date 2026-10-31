@@ -52,6 +52,12 @@ export type Reservation = {
   created_at: string
 }
 
+export type ReservationCreate = {
+  apartment_id: number
+  student_name: string
+  student_email: string
+}
+
 /** Prices are stored in cents. formatDollars(72500) gives "$725". */
 export function formatDollars(cents: number): string {
   return (cents / 100).toLocaleString('en-US', {
