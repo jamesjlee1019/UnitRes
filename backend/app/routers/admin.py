@@ -7,7 +7,7 @@ Later, only staff should be able to reach these routes. The Accounts team's
 login and roles will plug in here.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from app.db import DbSession
 from app.models import Apartment
@@ -33,8 +33,18 @@ def add_apartment(apartment: ApartmentCreate, db: DbSession):
 @router.delete("/admin/apartments/{apartment_id}", status_code=204)
 def remove_apartment(apartment_id: int, db: DbSession):
     """Staff: remove an apartment."""
-    # TODO (Admin, week 2): what should happen if the unit already has reservations?
-    raise not_built_yet("Admin", "backend/app/routers/admin.py")
+    apartment = db.get(Apartment, apartment_id)
+    if apartment is None:
+        raise HTTPException(status_code=404, detail="Apartment not found")
+    # Reservations point at the apartment, so deleting it would break them
+    # (and the database refuses anyway). Staff can mark it unavailable instead.
+    if apartment.reservations:
+        raise HTTPException(
+            status_code=409,
+            detail="Apartment has reservations and can't be removed. Mark it unavailable instead.",
+        )
+    db.delete(apartment)
+    db.commit()
 
 
 @router.get("/admin/reservations", response_model=list[ReservationOut])
