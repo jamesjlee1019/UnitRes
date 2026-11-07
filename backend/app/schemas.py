@@ -66,3 +66,4 @@ class AccountOut(BaseModel):
     name: str 
     email: str 
     role: str
+    

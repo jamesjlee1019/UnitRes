@@ -16,6 +16,7 @@ from sendgrid.helpers.mail import Mail, Email, To, Content
 from app.config import settings
 
 
+
 def main() -> None:
     if len(sys.argv) != 2:
         sys.exit("Usage: python scripts/send_test_email.py you@stanford.edu")
