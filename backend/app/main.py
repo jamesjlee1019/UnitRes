@@ -40,7 +40,6 @@ if settings.entrata_mode == "fake":
     # Pretend-Entrata controls. Never reachable when talking to the real Entrata.
     app.include_router(dev.router)
 
-
 @app.get("/health", tags=["Setup"])
 def health(db: DbSession):
     """Lets the home page check that the API and the database are up.

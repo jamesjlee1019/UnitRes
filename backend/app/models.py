@@ -13,6 +13,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     String,
+    UniqueConstraint,
     false,
     func,
     text,
@@ -25,6 +26,10 @@ from app.db import Base
 
 class Apartment(Base):
     __tablename__ = "apartments"
+    __table_args__ = (
+        # A building can't have the same unit number twice
+        UniqueConstraint("building", "number", name="apartment_unit_is_unique"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     number: Mapped[str] = mapped_column(String(20))  # "A-101"
@@ -119,3 +124,13 @@ class Reservation(Base):
 
     apartment: Mapped[Apartment] = relationship(back_populates="reservations")
     deposit: Mapped[Deposit | None] = relationship(back_populates="reservations")
+
+
+class Account(Base):
+    __tablename__ = "accounts"
+    __table_args__ = (CheckConstraint("role IN ('student', 'faculty')", name="user_role_is_valid",),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(320), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(20), default="student", server_default="student")

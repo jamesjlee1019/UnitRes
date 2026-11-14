@@ -41,6 +41,9 @@ export type Apartment = {
 /** What the staff form sends to add an apartment */
 export type NewApartment = Omit<Apartment, 'id' | 'available'>
 
+/** What staff send to change an apartment. Leave out anything that isn't changing. */
+export type ApartmentUpdate = Partial<Omit<Apartment, 'id'>>
+
 /**
  * Students pay the security deposit in JSM's Entrata first. Reserve only works once
  * that deposit has shown up here, and then it's confirmed right away. No holds.

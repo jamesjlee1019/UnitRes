@@ -242,3 +242,18 @@ def test_seed_lets_you_try_reserve_right_away():
     assert eligibility(PAID_STUDENT_EMAIL)["can_reserve"] is True
     assert reserve(available[0]["id"], PAID_STUDENT_EMAIL).status_code == 201
     assert len(client.get("/apartments").json()) == 3
+
+
+def test_staff_delete_only_cancelled_reservations(units):
+    pay_deposit("sam@example.com")
+    reservation_id = reserve(units[0], "sam@example.com").json()["id"]
+
+    # Confirmed: it's the student's unit, so staff have to cancel it first
+    assert client.delete(f"/admin/reservations/{reservation_id}").status_code == 409
+
+    client.post(f"/admin/reservations/{reservation_id}/cancel")
+    assert client.delete(f"/admin/reservations/{reservation_id}").status_code == 204
+    assert client.delete(f"/admin/reservations/{reservation_id}").status_code == 404
+
+    # With the reservation gone, the apartment can be removed
+    assert client.delete(f"/admin/apartments/{units[0]}").status_code == 204
