@@ -33,6 +33,16 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDelete(id: number) {
+    if (!confirm('Delete this reservation? This cannot be undone.')) return
+    try {
+      await api<null>(`/admin/reservations/${id}`, { method: 'DELETE' })
+      setReservations((prev) => prev.filter((r) => r.id !== id))
+    } catch (err) {
+      alert(`Couldn't delete: ${(err as Error).message}`)
+    }
+  }
+
   useEffect(() => {
     loadReservations()
   }, [])
@@ -154,7 +164,7 @@ export default function AdminPage() {
           <table className="mt-4 border-2 border-ink bg-paper text-sm">
           <thead>
             <tr>
-              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on'].map((h) => (
+              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on', ''].map((h) => (
                 <th key={h} className="border border-line px-3 py-2 text-left">{h}</th>
               ))}
             </tr>
@@ -168,6 +178,16 @@ export default function AdminPage() {
                 <td className="border border-line px-3 py-2">{r.status}</td>
                 <td className="border border-line px-3 py-2">{r.paid ? 'Yes' : 'No'}</td>
                 <td className="border border-line px-3 py-2">{new Date(r.created_at).toLocaleDateString()}</td>
+                <td className="border border-line px-3 py-2">
+                  <button
+                    onClick={() => handleDelete(r.id)}
+                    disabled={r.paid}
+                    title={r.paid ? 'Paid reservations must be refunded first' : ''}
+                    className="font-semibold text-brand underline disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
