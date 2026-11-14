@@ -25,9 +25,9 @@ Version 1 is done when all of these work on `main`:
 
 - [x] The apartments page lists the available units from the database
 - [x] The staff page adds apartments, removes them or marks them unavailable, and lists every reservation
-- [ ] A student can reserve a unit from the apartments page (the API works, the Reserve button isn't built yet)
+- [x] A student who has paid their deposit can reserve a unit from the apartments page
 - [x] A reserved unit drops off the list, and the database refuses a second reservation for it, even if two people reserve at the same moment
-- [ ] The "you're reserved" email goes out on its own after a reservation (for now, a test script sends it)
+- [x] The "you're reserved" email goes out on its own after a reservation, with the scheduling link
 
 Open pull requests show what's in progress. When your PR finishes one of these, tick its box in the same PR.
 
@@ -51,7 +51,7 @@ Press `Ctrl+C` to stop. After the first time, `docker compose up` starts in seco
 | Open this | To see |
 | --- | --- |
 | [localhost:3000](http://localhost:3000) | The setup check |
-| [localhost:3000/apartments](http://localhost:3000/apartments) | The available apartments |
+| [localhost:3000/apartments](http://localhost:3000/apartments) | The available apartments, and reserving one |
 | [localhost:3000/admin](http://localhost:3000/admin) | The staff page |
 | [localhost:8000/docs](http://localhost:8000/docs) | Every API endpoint, and you can try each one |
 
@@ -71,10 +71,10 @@ To start over with fresh sample data, run `docker compose down -v`, then `docker
 ### Trying it without real money
 
 While we're building, the app talks to a pretend version of Entrata, so nobody pays anything.
-Open [localhost:8000/docs](http://localhost:8000/docs):
 
-- **Reserve a unit:** use `POST /reservations` with `paid.student@example.com`.
-- **Pretend someone new paid:** use `POST /dev/entrata/payments` with any email. That email can then reserve.
+- **Reserve a unit:** on [localhost:3000/apartments](http://localhost:3000/apartments), enter `paid.student@example.com` and press Check my deposit.
+- **Pretend someone new paid:** at [localhost:8000/docs](http://localhost:8000/docs), use `POST /dev/entrata/payments` with any email. That email can then reserve.
+- **Get the email:** put the SendGrid lines in `.env` (see Keys) and reserve with an inbox you can check. Without them, reserving still works and the API log says the email was skipped.
 
 ## Teams
 

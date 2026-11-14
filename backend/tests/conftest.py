@@ -19,6 +19,7 @@ _test_url = _dev_url.set(database=f"{_dev_url.database}_test")
 os.environ["DATABASE_URL"] = _test_url.render_as_string(hide_password=False)
 os.environ["ENTRATA_MODE"] = "fake"
 os.environ["ENTRATA_POLL_SECONDS"] = "0"  # tests run the sync themselves
+os.environ["SENDGRID_API_KEY"] = ""  # tests never send real email
 
 
 def _create_test_database() -> None:

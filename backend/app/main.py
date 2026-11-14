@@ -14,6 +14,9 @@ from app.jobs import start_entrata_sync
 from app.models import Apartment
 from app.routers import admin, booking, dev, payments
 
+# Importing it turns on the "you're reserved" email (it listens for reservation_confirmed)
+from app import notifications  # noqa: F401
+
 # So our own log lines (unitres.*) show up in "docker compose logs -f api"
 _log = logging.getLogger("unitres")
 _log.setLevel(logging.INFO)
