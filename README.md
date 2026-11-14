@@ -1,124 +1,92 @@
 # JSM UnitRes
 
-A website where students reserve an apartment by paying an application fee.
+A website where students reserve an apartment at JSM Living.
 
-## Set up (once)
+## How reserving works
 
-1. **Install two things**
-   - [Git](https://git-scm.com/downloads)
-   - [Docker Desktop](https://www.docker.com/products/docker-desktop/). Open it once so it's running.
+Students don't pay on our site. They apply and pay their security deposit through JSM's normal application, which runs on Entrata, the system JSM already uses. Once their deposit shows up on our end, they can reserve a unit here, and it's theirs right away.
 
+1. The student applies and pays the deposit on JSM's site.
+2. They come back to UnitRes and pick a unit.
+3. That's it. The unit disappears from the list for everyone else.
 
-2. **Get the code**
+One deposit gets you one unit, and two people can never reserve the same one.
 
-   ```bash
-   git clone https://github.com/jamesjlee1019/UnitRes.git
-   cd UnitRes
-   ```
+## Getting it running
 
-3. **Start it**
+You need [Git](https://git-scm.com/downloads) and [Docker Desktop](https://www.docker.com/products/docker-desktop/). Open Docker once so it's running, then:
 
-   ```bash
-   docker compose up
-   ```
+```bash
+git clone https://github.com/jamesjlee1019/UnitRes.git
+cd UnitRes
+docker compose up
+```
 
-   The first run downloads and installs everything, so give it a few minutes.
-   It's ready when the log says `Uvicorn running on http://0.0.0.0:8000` and `Local: http://localhost:3000/`.
+The first time takes a few minutes while everything installs. When the log says `Uvicorn running on http://0.0.0.0:8000` and `Local: http://localhost:3000/`, open [localhost:3000](http://localhost:3000). Three check marks means you're all set.
 
-4. **Open [localhost:3000](http://localhost:3000)**. Three check marks means you're set up.
+Press `Ctrl+C` to stop. After the first time, it starts in seconds.
 
-To stop, press `Ctrl+C`. Next time, `docker compose up` starts in seconds.
+## Trying it without real money
 
-## Week 1, by team
+While we're building, the app talks to a pretend version of Entrata, so nobody pays anything. The sample data comes with five apartments (four open, one already taken) and one student who has already paid: `paid.student@example.com`.
 
-| Team | Goal | Your code goes in |
+To try it, open [localhost:8000/docs](http://localhost:8000/docs):
+
+- **Reserve a unit:** use `POST /reservations` with `paid.student@example.com`.
+- **Pretend someone new paid:** use `POST /dev/entrata/payments` with any email. That email can then reserve.
+
+## Who works on what
+
+| Team | What you own | Where your code lives |
 | --- | --- | --- |
-| Booking | The apartments page shows the available units from the database | `backend/app/routers/booking.py`<br>`frontend/src/pages/ApartmentsPage.tsx` |
-| Payments | A button opens Stripe Checkout in test mode, and card 4242 goes through to a success page | `backend/app/routers/payments.py`<br>`frontend/src/pages/CheckoutPage.tsx`<br>`frontend/src/pages/CheckoutSuccessPage.tsx` |
-| Admin | A form on the staff page adds an apartment to the database | `backend/app/routers/admin.py`<br>`frontend/src/pages/AdminPage.tsx` |
-| Accounts | A script sends the "you're reserved" email, with the Calendly link, to your own inbox | `backend/scripts/send_test_email.py` |
+| Booking | The apartments list and the Reserve button | `backend/app/routers/booking.py`<br>`frontend/src/pages/ApartmentsPage.tsx` |
+| Payments | Getting deposits in from Entrata | `backend/app/routers/payments.py`<br>`backend/app/entrata/` |
+| Admin | The staff page | `backend/app/routers/admin.py`<br>`frontend/src/pages/AdminPage.tsx` |
+| Accounts | Logins and emails | `backend/scripts/` |
 
-Each of those files starts with a comment saying what to build, with `TODO` where the code goes.
-Two files are working examples to copy from: the `/health` route in `backend/app/main.py`
-(reading the database) and `frontend/src/pages/HomePage.tsx` (loading data on a page).
+Every file has a comment at the top saying what it's for. The site has three parts that talk to each other: the pages in `frontend/` (localhost:3000), the API in `backend/` (localhost:8000), and a PostgreSQL database.
 
+## Handy commands
 
-## Everyday commands
-
-Run these from the `UnitRes` folder. `docker compose up` keeps its terminal busy,
-so open a second terminal for the rest.
+`docker compose up` keeps its terminal busy, so open a second one for these.
 
 | To do this | Run this |
 | --- | --- |
-| Start everything | `docker compose up` |
-| Stop | `Ctrl+C` |
 | See the API's errors | `docker compose logs -f api` |
-| Try any API endpoint in your browser | open [localhost:8000/docs](http://localhost:8000/docs) |
-| Run the backend tests | `docker compose exec api pytest` |
-| Look inside the database with SQL | `docker compose exec db psql -U unitres` |
-| Wipe your database and reload the sample data | `docker compose down -v`, then `docker compose up` |
+| Run the tests | `docker compose exec api pytest` |
+| Look inside the database | `docker compose exec db psql -U unitres` |
+| Start over with fresh sample data | `docker compose down -v`, then `docker compose up` |
 
-Saving a file reloads things on its own: the API restarts when you save a `.py` file,
-and the page updates when you save a `.tsx` file.
+When you save a file, the site reloads on its own.
 
-## How it fits together
+## Keys
 
-```
-your browser
-   │
-   ▼
-localhost:3000   frontend/   React pages. fetch('/api/...') is forwarded to the API.
-   │
-   ▼
-localhost:8000   backend/    FastAPI. Each team has a file in backend/app/routers/.
-   │
-   ▼
-PostgreSQL       db          The apartments and reservations tables (kickoff slide 4).
-```
-
-```
-backend/
-  app/
-    main.py          the API app, plus the /health example
-    models.py        the database tables
-    schemas.py       the JSON the API sends and receives
-    routers/         one file per team: booking.py, payments.py, admin.py
-    seed.py          the sample apartments everyone starts with
-  alembic/versions/  schema changes (migrations), applied on startup
-  scripts/           one-off scripts, like the Accounts test email
-  tests/
-frontend/src/
-  pages/             one page per screen
-  api.ts             api() for calling the backend, plus shared types
-  teams.ts           each team's week-1 goal, shown on the home page
-docker-compose.yml   what "docker compose up" starts
-```
-
-The sample data has five apartments. Four are available (the units from the kickoff mock)
-and one is already reserved, so a correct apartments page shows four.
-
-## Keys (Payments and Accounts)
-
-Booking and Admin can skip this. Payments and Accounts need API keys in a `.env` file:
+Only Accounts needs keys right now, for sending email. Copy the example file and fill in your lines:
 
 ```bash
 cp .env.example .env
 ```
 
-Fill in your team's lines, then stop (`Ctrl+C`) and run `docker compose up` again.
-`.env` is ignored by Git, so keys stay on your laptop.
+Then restart with `Ctrl+C` and `docker compose up`. Git ignores `.env`, so your keys stay on your laptop. Please don't paste them in the group chat.
 
+## Changing the database
 
-## Git: how to get your work in
+If you add or change a table, edit `backend/app/models.py`, then make a migration so everyone else's database gets the same change:
+
+```bash
+docker compose exec api alembic revision --autogenerate -m "add accounts table"
+```
+
+Look over the new file in `backend/alembic/versions/`, then restart. Give the group chat a heads-up first: if two people add migrations at the same time, `docker compose up` breaks for everyone until one of them is fixed.
+
+## Getting your work in
 
 ```bash
 git checkout main && git pull
-git checkout -b booking/apartment-list     # team name / what you're doing
-# ...make changes, then:
+git checkout -b booking/apartment-list    # your team / what you're doing
+# make your changes, then:
 git add -A && git commit -m "Show available apartments"
 git push -u origin booking/apartment-list
 ```
 
-Then open a pull request into `main` on GitHub and have a teammate look it over before merging.
-Keep pull requests small and merge often. A goal counts as done once it works on `main`.
-
+Then open a pull request on GitHub and have a teammate look it over before you merge. Small pull requests are easier to review, so merge often.
