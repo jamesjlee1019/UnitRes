@@ -6,6 +6,7 @@
    brand is the green from the JSM Living logo. It's light, so:
    - buttons filled with bg-brand use text-ink, not text-white (white is hard to read on it)
    - green text on the cream background uses text-brand-ink, which is dark enough to read
+     (on a dark bg-ink background, plain text-brand reads fine)
    - errors use text-danger / border-danger, so they don't look like success messages */
 @theme {
   --color-cream: #f3eee6;
