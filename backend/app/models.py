@@ -6,7 +6,16 @@ or nobody else's database will match. See "Changing the schema" in the README.
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, String, false, func, true
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+    false,
+    func,
+    true,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base
@@ -14,6 +23,10 @@ from app.db import Base
 
 class Apartment(Base):
     __tablename__ = "apartments"
+    __table_args__ = (
+        # A building can't have the same unit number twice
+        UniqueConstraint("building", "number", name="apartment_unit_is_unique"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     number: Mapped[str] = mapped_column(String(20))  # "A-101"

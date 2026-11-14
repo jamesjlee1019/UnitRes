@@ -30,7 +30,9 @@ class ApartmentCreate(BaseModel):
     number: str = Field(min_length=1, max_length=20, examples=["D-410"])
     building: str = Field(min_length=1, max_length=100, examples=["Building D"])
     bedrooms: int = Field(ge=0, le=10, examples=[2])
-    price_cents: int = Field(gt=0, examples=[95000])
+    # At most $100,000 a month. The database column can't hold much more
+    # than $21 million, so without a limit a typo crashed the API.
+    price_cents: int = Field(gt=0, le=10_000_000, examples=[95000])
 
 
 class ReservationCreate(BaseModel):

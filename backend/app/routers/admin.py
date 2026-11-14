@@ -7,8 +7,10 @@ Later, only staff should be able to reach these routes. The Accounts team's
 login and roles will plug in here.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+
 from app.db import DbSession
 from app.models import Apartment, Reservation
 from app.routers import not_built_yet
@@ -24,7 +26,16 @@ def add_apartment(apartment: ApartmentCreate, db: DbSession):
     # so its fields can go straight into a new database row.
     new_apartment = Apartment(**apartment.model_dump())
     db.add(new_apartment)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # The database refused it because that building already has this unit
+        # number (apartment_unit_is_unique in models.py). 409 means "Conflict".
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=f"{apartment.building} already has a unit {apartment.number}.",
+        )
     # The database assigns the id on commit. response_model=ApartmentOut
     # turns the row into JSON.
     return new_apartment

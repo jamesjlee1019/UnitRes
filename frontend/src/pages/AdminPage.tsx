@@ -114,6 +114,7 @@ export default function AdminPage() {
             type="number"
             required
             min={0.01}
+            max={100000}
             step={0.01}
             placeholder="950"
             value={price}
