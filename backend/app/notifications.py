@@ -1,10 +1,20 @@
-import sys
+"""Emails the app sends, through SendGrid.
+
+Anything in the app can send one:
+
+    from app.notifications import send_reservation_confirmation
+    send_reservation_confirmation("student@stanford.edu")
+
+To try it from the command line, use scripts/send_test_email.py.
+"""
+
 import sendgrid
 from sendgrid.helpers.mail import Mail, Email, To, Content
 
 from app.config import settings
 
-def send_reservation_confirmation(to_email) -> None:
+
+def send_reservation_confirmation(to_email: str) -> None:
     subject = "You're reserved!"
     body = (
         "Your apartment is reserved.\n\n"
@@ -19,8 +29,3 @@ def send_reservation_confirmation(to_email) -> None:
     response = sg.client.mail.send.post(request_body=mail_json)
     print(response.status_code)
     print(response.headers)
-
-
-if __name__ == "__main__":
-    to_email = sys.argv[1]
-    send_reservation_confirmation(to_email)
