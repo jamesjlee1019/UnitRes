@@ -1,8 +1,19 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { api, formatDollars, type Apartment, type Reservation, type ReservationCreate } from '../api.ts'
+import {
+  api,
+  formatDollars,
+  type Apartment,
+  type Eligibility,
+  type NewReservation,
+  type StudentReservation,
+} from '../api.ts'
 
 /**
- * BOOKING TEAM: the list of available apartments.
+ * BOOKING TEAM: the list of available apartments, and reserving one.
+ *
+ * Students pay their security deposit in JSM's Entrata application first. Here they
+ * pick a unit and type the email from that application. We check GET /eligibility,
+ * then POST /reservations, which is confirmed right away. No holds.
  */
 export default function ApartmentsPage() {
   const [apartments, setApartments] = useState<Apartment[]>([])
@@ -11,13 +22,14 @@ export default function ApartmentsPage() {
   const [selectedApartmentId, setSelectedApartmentId] = useState<number | null>(null)
   const [studentName, setStudentName] = useState('')
   const [studentEmail, setStudentEmail] = useState('')
-  const [reservation, setReservation] = useState<Reservation | null>(null)
+  const [reservation, setReservation] = useState<StudentReservation | null>(null)
   const [reservationError, setReservationError] = useState<string | null>(null)
+  // Where to apply and pay, shown when we haven't seen their deposit yet
+  const [applyUrl, setApplyUrl] = useState<string | null>(null)
   const [reserving, setReserving] = useState(false)
   const [search, setSearch] = useState('')
   const [bedroomFilter, setBedroomFilter] = useState('all')
   const [sortBy, setSortBy] = useState('price-asc')
-  const [now, setNow] = useState(() => Date.now())
 
   async function loadApartments() {
     setLoading(true)
@@ -37,17 +49,6 @@ export default function ApartmentsPage() {
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
-
-  useEffect(() => {
-    if (!reservation?.expires_at) return
-
-    const timer = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(timer)
-  }, [reservation])
-
-  const secondsRemaining = reservation?.expires_at
-    ? Math.max(0, Math.floor((new Date(reservation.expires_at).getTime() - now) / 1000))
-    : null
 
   const visibleApartments = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase()
@@ -71,13 +72,6 @@ export default function ApartmentsPage() {
     (a, b) => a - b,
   )
 
-  function formatCountdown(seconds: number | null) {
-    if (seconds === null) return '30 minutes'
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`
-  }
-
   function clearFilters() {
     setSearch('')
     setBedroomFilter('all')
@@ -88,26 +82,51 @@ export default function ApartmentsPage() {
     setSelectedApartmentId(apartmentId)
     setReservation(null)
     setReservationError(null)
+    setApplyUrl(null)
   }
 
   async function submitReservation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (selectedApartmentId === null) return
 
-    const request: ReservationCreate = {
+    const request: NewReservation = {
       apartment_id: selectedApartmentId,
       student_name: studentName.trim(),
       student_email: studentEmail.trim(),
     }
     setReserving(true)
     setReservationError(null)
+    setApplyUrl(null)
     try {
-      const created = await api<Reservation>('/reservations', {
+      // Has this email paid a deposit that isn't reserving anything yet?
+      const eligibility = await api<Eligibility>(
+        `/eligibility?email=${encodeURIComponent(request.student_email)}`,
+      )
+      if (eligibility.reason === 'no_deposit') {
+        setReservationError(
+          `We haven't seen a security deposit from ${request.student_email} yet. Apply and pay ` +
+            "it in JSM's application with this email, then come back. It can take a few " +
+            'minutes to show up here.',
+        )
+        setApplyUrl(eligibility.entrata_application_url)
+        return
+      }
+      if (eligibility.reason === 'already_reserved') {
+        const unit = eligibility.reserved?.apartment
+        setReservationError(
+          `${request.student_email} has already reserved ` +
+            (unit ? `Unit ${unit.number} in ${unit.building}` : 'a unit') +
+            '. One security deposit reserves one unit.',
+        )
+        return
+      }
+
+      const created = await api<StudentReservation>('/reservations', {
         method: 'POST',
         body: JSON.stringify(request),
       })
       setReservation(created)
-      setApartments((current) => current.filter(({ id }) => id !== created.apartment_id))
+      setApartments((current) => current.filter(({ id }) => id !== created.apartment.id))
       setSelectedApartmentId(null)
       setStudentName('')
       setStudentEmail('')
@@ -126,7 +145,7 @@ export default function ApartmentsPage() {
           Apartments that feel like home.
         </h1>
         <p className="mt-4 max-w-xl text-cream/70">
-          Browse available units near campus and place a 30-minute hold when you find the right fit.
+          Paid your security deposit in JSM's application? Pick a unit here and it's yours right away.
         </p>
         <div className="mt-7 flex flex-wrap gap-6 text-sm">
           <div>
@@ -134,15 +153,30 @@ export default function ApartmentsPage() {
             <p className="text-cream/60">available now</p>
           </div>
           <div>
-            <p className="font-mono text-2xl font-bold text-cream">$50</p>
-            <p className="text-cream/60">application fee</p>
+            <p className="font-mono text-2xl font-bold text-cream">1 unit</p>
+            <p className="text-cream/60">per deposit</p>
           </div>
           <div>
-            <p className="font-mono text-2xl font-bold text-cream">30 min</p>
-            <p className="text-cream/60">reservation hold</p>
+            <p className="font-mono text-2xl font-bold text-cream">Instant</p>
+            <p className="text-cream/60">confirmation</p>
           </div>
         </div>
       </div>
+
+      {reservation && (
+        <div className="mt-6 rounded-md border-2 border-emerald-700 bg-emerald-50 p-5">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-emerald-700">Reserved</p>
+          <h2 className="mt-1 text-xl font-bold">
+            Unit {reservation.apartment.number} in {reservation.apartment.building} is yours.
+          </h2>
+          <p className="mt-2 text-sm text-muted">
+            {reservation.apartment.bedrooms}{' '}
+            {reservation.apartment.bedrooms === 1 ? 'bedroom' : 'bedrooms'} ·{' '}
+            {formatDollars(reservation.apartment.price_cents)}/month. It's off the list, so nobody
+            else can reserve it.
+          </p>
+        </div>
+      )}
 
       <div className="mt-8">
         {error ? (
@@ -221,7 +255,7 @@ export default function ApartmentsPage() {
                 </button>
               </div>
             ) : (
-              <div className="mt-4 grid gap-5 sm:grid-cols-2">
+              <div className="mt-4 grid items-start gap-5 sm:grid-cols-2">
                 {visibleApartments.map((apartment) => (
                   <article key={apartment.id} className="group rounded-md border-2 border-ink bg-paper p-5 transition-shadow hover:shadow-[5px_5px_0_#1c1a17]">
                     <div className="flex items-start justify-between gap-3">
@@ -256,7 +290,9 @@ export default function ApartmentsPage() {
                     </div>
                     {selectedApartmentId === apartment.id && (
                       <form className="mt-5 space-y-3 border-t border-line pt-5" onSubmit={submitReservation}>
-                        <p className="text-sm font-semibold">Tell us where to send your confirmation.</p>
+                        <p className="text-sm font-semibold">
+                          Use the email from your JSM application, so we can find your deposit.
+                        </p>
                     <label className="block text-sm font-semibold">
                       Name
                       <input
@@ -277,7 +313,19 @@ export default function ApartmentsPage() {
                         required
                       />
                     </label>
-                    {reservationError && <p className="text-sm text-brand">{reservationError}</p>}
+                    {reservationError && (
+                      <p className="text-sm text-brand">
+                        {reservationError}
+                        {applyUrl && (
+                          <>
+                            {' '}
+                            <a className="font-semibold underline" href={applyUrl} target="_blank" rel="noreferrer">
+                              Go to JSM's application
+                            </a>
+                          </>
+                        )}
+                      </p>
+                    )}
                     <div className="flex gap-3">
                       <button
                         type="submit"
@@ -302,21 +350,6 @@ export default function ApartmentsPage() {
               </div>
             )}
           </>
-        )}
-        {reservation && (
-          <div className="mt-6 flex flex-col gap-4 rounded-md border-2 border-emerald-700 bg-emerald-50 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="font-mono text-xs uppercase tracking-[0.2em] text-emerald-700">Hold confirmed</p>
-              <h2 className="mt-1 text-xl font-bold">Your apartment is reserved.</h2>
-              <p className="mt-2 text-sm text-muted">
-                Complete payment before {reservation.expires_at ? new Date(reservation.expires_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'the hold expires'}.
-              </p>
-            </div>
-            <div className="shrink-0 rounded-md bg-white px-4 py-3 text-center">
-              <p className="font-mono text-2xl font-bold text-emerald-700">{formatCountdown(secondsRemaining)}</p>
-              <p className="text-xs text-muted">time remaining</p>
-            </div>
-          </div>
         )}
       </div>
     </section>
