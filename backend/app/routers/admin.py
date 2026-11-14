@@ -15,6 +15,8 @@ login and roles will plug in here.
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+
 from app.db import DbSession
 from app.models import Apartment, Reservation
 from app.schemas import ApartmentCreate, ApartmentOut, ApartmentUpdate, ReservationOut
@@ -35,7 +37,16 @@ def add_apartment(apartment: ApartmentCreate, db: DbSession):
     # so its fields can go straight into a new database row.
     new_apartment = Apartment(**apartment.model_dump())
     db.add(new_apartment)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # The database refused it because that building already has this unit
+        # number (apartment_unit_is_unique in models.py). 409 means "Conflict".
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=f"{apartment.building} already has a unit {apartment.number}.",
+        )
     # The database assigns the id on commit. response_model=ApartmentOut
     # turns the row into JSON.
     return new_apartment
@@ -51,7 +62,15 @@ def update_apartment(apartment_id: int, changes: ApartmentUpdate, db: DbSession)
     # so a field sent as null is skipped too.
     for field, value in changes.model_dump(exclude_none=True).items():
         setattr(apartment, field, value)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Renamed it to a unit number its building already has
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=f"{apartment.building} already has a unit {apartment.number}.",
+        )
     return apartment
 
 
