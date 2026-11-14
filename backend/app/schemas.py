@@ -33,6 +33,16 @@ class ApartmentCreate(BaseModel):
     price_cents: int = Field(gt=0, examples=[95000])
 
 
+class ApartmentUpdate(BaseModel):
+    """What staff send to change an apartment. Leave out anything that isn't changing."""
+
+    number: str | None = Field(default=None, min_length=1, max_length=20)
+    building: str | None = Field(default=None, min_length=1, max_length=100)
+    bedrooms: int | None = Field(default=None, ge=0, le=10)
+    price_cents: int | None = Field(default=None, gt=0)
+    available: bool | None = Field(default=None, examples=[False])
+
+
 class ReservationCreate(BaseModel):
     """What the website sends when a student clicks Reserve."""
 
