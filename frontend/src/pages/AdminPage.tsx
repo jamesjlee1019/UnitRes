@@ -5,6 +5,7 @@ import {
   type Apartment,
   type ApartmentUpdate,
   type NewApartment,
+  type Reservation,
 } from '../api.ts'
 
 /**
@@ -38,6 +39,16 @@ export default function AdminPage() {
       setReservationsError((err as Error).message)
     } finally {
       setLoadingReservations(false)
+    }
+  }
+
+  async function handleDelete(id: number) {
+    if (!confirm('Delete this reservation? This cannot be undone.')) return
+    try {
+      await api<null>(`/admin/reservations/${id}`, { method: 'DELETE' })
+      setReservations((prev) => prev.filter((r) => r.id !== id))
+    } catch (err) {
+      alert(`Couldn't delete: ${(err as Error).message}`)
     }
   }
 
@@ -191,6 +202,7 @@ export default function AdminPage() {
             type="number"
             required
             min={0.01}
+            max={100000}
             step={0.01}
             placeholder="950"
             value={price}
@@ -284,7 +296,7 @@ export default function AdminPage() {
           <table className="mt-4 border-2 border-ink bg-paper text-sm">
           <thead>
             <tr>
-              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on'].map((h) => (
+              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on', ''].map((h) => (
                 <th key={h} className="border border-line px-3 py-2 text-left">{h}</th>
               ))}
             </tr>
@@ -296,8 +308,18 @@ export default function AdminPage() {
                 <td className="border border-line px-3 py-2">{r.student_email}</td>
                 <td className="border border-line px-3 py-2">#{r.apartment_id}</td>
                 <td className="border border-line px-3 py-2">{r.status}</td>
-                <td className="border border-line px-3 py-2">{r.paid ? 'Yes' : 'No'}</td>
+                <td className="border border-line px-3 py-2">{r.deposit ? 'Yes' : 'No'}</td>
                 <td className="border border-line px-3 py-2">{new Date(r.created_at).toLocaleDateString()}</td>
+                <td className="border border-line px-3 py-2">
+                  <button
+                    onClick={() => handleDelete(r.id)}
+                    disabled={r.status === 'confirmed'}
+                    title={r.status === 'confirmed' ? 'Cancel this reservation before deleting it' : ''}
+                    className="font-semibold text-brand underline disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -324,14 +346,4 @@ function Field(props: { label: string; children: ReactNode }) {
       {props.children}
     </label>
   )
-}
-type Reservation = {
-  id: number
-  apartment_id: number
-  student_name: string
-  student_email: string
-  paid: boolean
-  status: string
-  expires_at: string | null
-  created_at: string
 }
