@@ -8,9 +8,9 @@ login and roles will plug in here.
 """
 
 from fastapi import APIRouter
-
+from sqlalchemy import select
 from app.db import DbSession
-from app.models import Apartment
+from app.models import Apartment, Reservation
 from app.routers import not_built_yet
 from app.schemas import ApartmentCreate, ApartmentOut, ReservationOut
 
@@ -41,4 +41,5 @@ def remove_apartment(apartment_id: int, db: DbSession):
 def list_reservations(db: DbSession):
     """Staff: show me all reservations."""
     # TODO (Admin, week 2): the seed data has one reservation to show.
-    raise not_built_yet("Admin", "backend/app/routers/admin.py")
+    reservations = db.scalars(select(Reservation).order_by(Reservation.id)).all()
+    return reservations
