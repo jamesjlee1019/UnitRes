@@ -14,7 +14,6 @@ app.include_router(booking.router)
 app.include_router(payments.router)
 app.include_router(admin.router)
 
-
 @app.get("/health", tags=["Setup"])
 def health(db: DbSession):
     """Lets the home page check that the API and the database are up.

@@ -1,5 +1,11 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
-import { api, formatDollars, type Apartment, type NewApartment } from '../api.ts'
+import {
+  api,
+  formatDollars,
+  type Apartment,
+  type ApartmentUpdate,
+  type NewApartment,
+} from '../api.ts'
 
 /**
  * ADMIN TEAM: the staff back office. It can be ugly.
@@ -8,6 +14,8 @@ import { api, formatDollars, type Apartment, type NewApartment } from '../api.ts
  *   The API wants the price in cents, so $950 is sent as 95000.
  *
  * Week 2: remove an apartment, and list who reserved what.
+ *
+ * Next: mark an apartment available or unavailable with PATCH /admin/apartments/{id}.
  */
 export default function AdminPage() {
   const [number, setNumber] = useState('')
@@ -33,9 +41,87 @@ export default function AdminPage() {
     }
   }
 
+  async function handleDelete(id: number) {
+    if (!confirm('Delete this reservation? This cannot be undone.')) return
+    try {
+      await api<null>(`/admin/reservations/${id}`, { method: 'DELETE' })
+      setReservations((prev) => prev.filter((r) => r.id !== id))
+    } catch (err) {
+      alert(`Couldn't delete: ${(err as Error).message}`)
+    }
+  }
+
   useEffect(() => {
     loadReservations()
   }, [])
+
+  const [apartments, setApartments] = useState<Apartment[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
+  // The apartment whose Remove or Mark button is waiting on the API
+  const [busyId, setBusyId] = useState<number | null>(null)
+  const [rowMessage, setRowMessage] = useState<string | null>(null)
+
+  function loadApartments() {
+    return fetchApartments()
+      .then((allApartments) => {
+        setApartments(allApartments)
+        setLoadError(null)
+      })
+      .catch((err: Error) => setLoadError(err.message))
+  }
+
+  useEffect(() => {
+    let ignore = false // the page closed before the apartments arrived
+    fetchApartments()
+      .then((allApartments) => {
+        if (!ignore) setApartments(allApartments)
+      })
+      .catch((err: Error) => {
+        if (!ignore) setLoadError(err.message)
+      })
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  async function handleRemove(apartment: Apartment) {
+    if (!window.confirm(`Remove ${apartment.number} in ${apartment.building}?`)) return
+    setBusyId(apartment.id)
+    setRowMessage(null)
+    try {
+      await api(`/admin/apartments/${apartment.id}`, { method: 'DELETE' })
+      setRowMessage(`Removed ${apartment.number}.`)
+      await loadApartments()
+    } catch (err) {
+      // e.g. 409 when the apartment still has reservations
+      setRowMessage(`Couldn't remove ${apartment.number}: ${(err as Error).message}`)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function handleToggleAvailable(apartment: Apartment) {
+    const changes: ApartmentUpdate = { available: !apartment.available }
+    setBusyId(apartment.id)
+    setRowMessage(null)
+    try {
+      const updated = await api<Apartment>(`/admin/apartments/${apartment.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(changes),
+      })
+      setApartments((current) =>
+        current.map((other) => (other.id === updated.id ? updated : other)),
+      )
+      setRowMessage(
+        `Marked ${updated.number} ${updated.available ? 'available' : 'unavailable'}.`,
+      )
+    } catch (err) {
+      setRowMessage(`Couldn't change ${apartment.number}: ${(err as Error).message}`)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSaving(true)
@@ -59,6 +145,7 @@ export default function AdminPage() {
       setBuilding('')
       setBedrooms('')
       setPrice('')
+      await loadApartments()
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -137,6 +224,59 @@ export default function AdminPage() {
         </p>
       )}
       {error && <p className="mt-4 font-semibold text-brand">Couldn't add it: {error}</p>}
+
+      {loadError && (
+        <p className="mt-8 font-semibold text-brand">Couldn't load apartments: {loadError}</p>
+      )}
+
+      <h2 className="mt-10 text-2xl font-bold tracking-tight">All apartments</h2>
+      <div className="mt-4 overflow-x-auto">
+        <table className={TABLE}>
+          <thead>
+            <tr>
+              <th className={CELL}>Number</th>
+              <th className={CELL}>Building</th>
+              <th className={CELL}>Bedrooms</th>
+              <th className={CELL}>Rent</th>
+              <th className={CELL}>Available</th>
+              <th className={CELL}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {apartments.map((apartment) => (
+              <tr key={apartment.id}>
+                <td className={CELL}>{apartment.number}</td>
+                <td className={CELL}>{apartment.building}</td>
+                <td className={CELL}>{apartment.bedrooms}</td>
+                <td className={CELL}>{formatDollars(apartment.price_cents)}/month</td>
+                <td className={CELL}>{apartment.available ? 'Yes' : 'No'}</td>
+                <td className={CELL}>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      disabled={busyId === apartment.id}
+                      onClick={() => handleToggleAvailable(apartment)}
+                      className={ROW_BUTTON}
+                    >
+                      {apartment.available ? 'Mark unavailable' : 'Mark available'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busyId === apartment.id}
+                      onClick={() => handleRemove(apartment)}
+                      className={ROW_BUTTON}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {rowMessage && <p className="mt-4 font-semibold">{rowMessage}</p>}
+
       <h2 className="mt-10 text-2xl font-bold tracking-tight">Reservations</h2>
       <button
         onClick={loadReservations}
@@ -155,7 +295,7 @@ export default function AdminPage() {
           <table className="mt-4 border-2 border-ink bg-paper text-sm">
           <thead>
             <tr>
-              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on'].map((h) => (
+              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on', ''].map((h) => (
                 <th key={h} className="border border-line px-3 py-2 text-left">{h}</th>
               ))}
             </tr>
@@ -169,6 +309,16 @@ export default function AdminPage() {
                 <td className="border border-line px-3 py-2">{r.status}</td>
                 <td className="border border-line px-3 py-2">{r.paid ? 'Yes' : 'No'}</td>
                 <td className="border border-line px-3 py-2">{new Date(r.created_at).toLocaleDateString()}</td>
+                <td className="border border-line px-3 py-2">
+                  <button
+                    onClick={() => handleDelete(r.id)}
+                    disabled={r.paid}
+                    title={r.paid ? 'Paid reservations must be refunded first' : ''}
+                    className="font-semibold text-brand underline disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -178,7 +328,15 @@ export default function AdminPage() {
   )
 }
 
+function fetchApartments() {
+  return api<Apartment[]>('/admin/apartments')
+}
+
 const INPUT = 'mt-1 block w-full rounded border-2 border-line bg-white px-3 py-2'
+const TABLE = 'w-full border-collapse rounded-md border-2 border-ink bg-paper text-left'
+const CELL = 'border-b border-line px-3 py-2'
+const ROW_BUTTON =
+  'whitespace-nowrap rounded border-2 border-ink px-3 py-1 text-sm font-semibold hover:bg-ink hover:text-white disabled:opacity-50'
 
 function Field(props: { label: string; children: ReactNode }) {
   return (

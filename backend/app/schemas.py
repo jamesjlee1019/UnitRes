@@ -35,6 +35,16 @@ class ApartmentCreate(BaseModel):
     price_cents: int = Field(gt=0, le=10_000_000, examples=[95000])
 
 
+class ApartmentUpdate(BaseModel):
+    """What staff send to change an apartment. Leave out anything that isn't changing."""
+
+    number: str | None = Field(default=None, min_length=1, max_length=20)
+    building: str | None = Field(default=None, min_length=1, max_length=100)
+    bedrooms: int | None = Field(default=None, ge=0, le=10)
+    price_cents: int | None = Field(default=None, gt=0)
+    available: bool | None = Field(default=None, examples=[False])
+
+
 class ReservationCreate(BaseModel):
     """What the website sends when a student clicks Reserve."""
 
@@ -54,3 +64,18 @@ class ReservationOut(BaseModel):
     status: str
     expires_at: datetime | None
     created_at: datetime
+
+class AccountRegister(BaseModel):
+
+    name: str = Field(min_length = 1, max_length=200)
+    email: EmailStr
+    password: str
+
+class AccountOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str 
+    email: str 
+    role: str
+    
