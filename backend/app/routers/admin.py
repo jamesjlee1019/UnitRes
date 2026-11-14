@@ -78,3 +78,17 @@ def list_reservations(db: DbSession):
     # TODO (Admin, week 2): the seed data has one reservation to show.
     reservations = db.scalars(select(Reservation).order_by(Reservation.id)).all()
     return reservations
+
+@router.delete("/admin/reservations/{reservation_id}", status_code=204)
+def delete_reservation(reservation_id: int, db: DbSession):
+    """Staff: delete an unpaid reservation."""
+    reservation = db.get(Reservation, reservation_id)
+    if reservation is None:
+        raise HTTPException(status_code=404, detail="Reservation not found.")
+    if reservation.paid:
+        raise HTTPException(
+            status_code=409,
+            detail="This reservation is paid. Refund it in Stripe before deleting.",
+        )
+    db.delete(reservation)
+    db.commit()
