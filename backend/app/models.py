@@ -48,3 +48,18 @@ class Reservation(Base):
     )
 
     apartment: Mapped[Apartment] = relationship(back_populates="reservations")
+
+class Account(Base):
+    __tablename__ = "accounts"
+    __table_args__ = (CheckConstraint("role IN ('student', 'faculty')", name="user_role_is_valid",),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(320), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+    role: Mapped[str] = mapped_column(String(20), default="student", server_default="student")
+
+
+
+
+
+
