@@ -95,7 +95,7 @@ export default function ApartmentsPage() {
 
       {reserved ? (
         <div className="mt-8 rounded-md border-2 border-ink bg-paper p-5">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand">You're reserved</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand-ink">You're reserved</p>
           <h2 className="mt-2 text-2xl font-bold">
             {reserved.apartment.building}, unit {reserved.apartment.number}
           </h2>
@@ -144,12 +144,12 @@ export default function ApartmentsPage() {
           <button
             type="submit"
             disabled={checking}
-            className="justify-self-start rounded bg-brand px-4 py-2 font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+            className="justify-self-start rounded bg-brand px-4 py-2 font-semibold text-ink hover:bg-brand-dark disabled:opacity-50"
           >
             {checking ? 'Checking…' : 'Check my deposit'}
           </button>
 
-          {checkError && <p className="font-semibold text-brand">Couldn't check: {checkError}</p>}
+          {checkError && <p className="font-semibold text-danger">Couldn't check: {checkError}</p>}
           {eligibility?.reason === 'ok' && (
             <p className="font-semibold">Your deposit is in. Pick a unit below.</p>
           )}
@@ -160,7 +160,7 @@ export default function ApartmentsPage() {
                 href={eligibility.entrata_application_url}
                 target="_blank"
                 rel="noreferrer"
-                className="font-semibold text-brand underline"
+                className="font-semibold text-brand-ink underline"
               >
                 Apply and pay on JSM's site
               </a>
@@ -177,14 +177,14 @@ export default function ApartmentsPage() {
       )}
 
       {reserveError && (
-        <p className="mt-4 rounded-md border-2 border-brand bg-paper p-4 font-semibold">
+        <p className="mt-4 rounded-md border-2 border-danger bg-paper p-4 font-semibold">
           Couldn't reserve: {reserveError}
         </p>
       )}
 
       <div className="mt-8">
         {error ? (
-          <p className="rounded-md border-2 border-brand bg-paper p-5">
+          <p className="rounded-md border-2 border-danger bg-paper p-5">
             Could not load apartments: {error}
           </p>
         ) : loading ? (
@@ -197,7 +197,7 @@ export default function ApartmentsPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {apartments.map((apartment) => (
               <article key={apartment.id} className="rounded-md border-2 border-ink bg-paper p-5">
-                <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand">
+                <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand-ink">
                   {apartment.building}
                 </p>
                 <h2 className="mt-2 text-2xl font-bold">Unit {apartment.number}</h2>
@@ -213,7 +213,7 @@ export default function ApartmentsPage() {
                     onClick={() => reserve(apartment)}
                     disabled={!canReserve || reservingId !== null}
                     title={canReserve ? '' : 'Check your deposit above first'}
-                    className="mt-4 rounded bg-brand px-4 py-2 font-semibold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
+                    className="mt-4 rounded bg-brand px-4 py-2 font-semibold text-ink hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     {reservingId === apartment.id ? 'Reserving…' : 'Reserve'}
                   </button>

@@ -212,7 +212,7 @@ export default function AdminPage() {
         <button
           type="submit"
           disabled={saving}
-          className="rounded bg-brand px-4 py-2 font-semibold text-white hover:bg-brand-dark disabled:opacity-50"
+          className="rounded bg-brand px-4 py-2 font-semibold text-ink hover:bg-brand-dark disabled:opacity-50"
         >
           {saving ? 'Adding…' : 'Add apartment'}
         </button>
@@ -224,10 +224,10 @@ export default function AdminPage() {
           {formatDollars(added.price_cents)}/month) as apartment #{added.id}.
         </p>
       )}
-      {error && <p className="mt-4 font-semibold text-brand">Couldn't add it: {error}</p>}
+      {error && <p className="mt-4 font-semibold text-danger">Couldn't add it: {error}</p>}
 
       {loadError && (
-        <p className="mt-8 font-semibold text-brand">Couldn't load apartments: {loadError}</p>
+        <p className="mt-8 font-semibold text-danger">Couldn't load apartments: {loadError}</p>
       )}
 
       <h2 className="mt-10 text-2xl font-bold tracking-tight">All apartments</h2>
@@ -289,7 +289,7 @@ export default function AdminPage() {
       {loadingReservations ? (
         <p className="mt-4">Loading…</p>
       ) : reservationsError ? (
-        <p className="mt-4 font-semibold text-brand">Couldn't load reservations: {reservationsError}</p>
+        <p className="mt-4 font-semibold text-danger">Couldn't load reservations: {reservationsError}</p>
       ) : reservations.length === 0 ? (
         <p className="mt-4">No reservations yet.</p>
       ) : (
@@ -315,7 +315,7 @@ export default function AdminPage() {
                     onClick={() => handleDelete(r.id)}
                     disabled={r.status === 'confirmed'}
                     title={r.status === 'confirmed' ? 'Cancel this reservation before deleting it' : ''}
-                    className="font-semibold text-brand underline disabled:cursor-not-allowed disabled:opacity-40"
+                    className="font-semibold text-danger underline disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Delete
                   </button>
