@@ -41,15 +41,61 @@ export type Apartment = {
 /** What the staff form sends to add an apartment */
 export type NewApartment = Omit<Apartment, 'id' | 'available'>
 
+/**
+ * Students pay the security deposit in JSM's Entrata first. Reserve only works once
+ * that deposit has shown up here, and then it's confirmed right away. No holds.
+ */
+export type ReservationStatus = 'confirmed' | 'cancelled'
+
+/** What the student sees: POST /reservations returns this */
+export type StudentReservation = {
+  id: number
+  status: ReservationStatus
+  created_at: string
+  apartment: Apartment
+}
+
+/**
+ * GET /eligibility?email=... : turn the Reserve buttons on only when can_reserve is true.
+ * no_deposit: send them to entrata_application_url to apply and pay, then check again.
+ */
+export type Eligibility = {
+  can_reserve: boolean
+  reason: 'ok' | 'no_deposit' | 'already_reserved'
+  reserved: StudentReservation | null
+  entrata_application_url: string
+}
+
+/** What a student types to reserve. The email must match their Entrata application. */
+export type NewReservation = {
+  apartment_id: number
+  student_name: string
+  student_email: string
+}
+
+/** A full reservation, for the staff page (GET /admin/reservations) */
 export type Reservation = {
   id: number
   apartment_id: number
   student_name: string
   student_email: string
-  paid: boolean
-  status: 'held' | 'confirmed' | 'expired' | 'cancelled'
-  expires_at: string | null
+  status: ReservationStatus
   created_at: string
+  entrata_unit_marked: boolean
+  apartment: Apartment
+  deposit: { id: number; entrata_id: string; amount_cents: number; paid_at: string } | null
+}
+
+/** A security deposit paid in Entrata, for the staff page (GET /admin/deposits) */
+export type Deposit = {
+  id: number
+  entrata_id: string
+  payer_email: string
+  amount_cents: number
+  paid_at: string
+  received_at: string
+  refunded_at: string | null
+  active_reservation_id: number | null // empty: not reserving anything yet
 }
 
 /** Prices are stored in cents. formatDollars(72500) gives "$725". */

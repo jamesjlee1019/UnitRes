@@ -15,8 +15,7 @@ alembic==1.20.0
 pydantic-settings==2.15.0
 email-validator==2.3.0
 
-# Payments, email, login (Payments and Accounts teams)
-stripe==16.0.0
+# Email and login (Accounts team)
 sendgrid==6.12.5
 pyjwt==2.15.1
 

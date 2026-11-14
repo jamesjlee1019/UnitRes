@@ -1,4 +1,4 @@
-"""One file per team: booking.py, payments.py, admin.py."""
+"""One file per team: booking.py, payments.py, admin.py. dev.py is the fake Entrata."""
 
 from fastapi import HTTPException
 
