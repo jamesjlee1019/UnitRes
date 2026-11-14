@@ -3,7 +3,8 @@
 Week 1: POST /admin/apartments adds an apartment to the database,
 and the form at http://localhost:3000/admin sends to it.
 
-Week 2: GET /admin/apartments lists every apartment, and DELETE removes one.
+Week 2: GET /admin/apartments lists every apartment, DELETE removes one,
+and GET /admin/reservations lists who reserved what.
 
 Next: PATCH /admin/apartments/{id} changes an apartment, like marking it
 unavailable when it can't be removed.
@@ -14,10 +15,8 @@ login and roles will plug in here.
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
-
 from app.db import DbSession
-from app.models import Apartment
-from app.routers import not_built_yet
+from app.models import Apartment, Reservation
 from app.schemas import ApartmentCreate, ApartmentOut, ApartmentUpdate, ReservationOut
 
 router = APIRouter(tags=["Admin"])
@@ -77,4 +76,5 @@ def remove_apartment(apartment_id: int, db: DbSession):
 def list_reservations(db: DbSession):
     """Staff: show me all reservations."""
     # TODO (Admin, week 2): the seed data has one reservation to show.
-    raise not_built_yet("Admin", "backend/app/routers/admin.py")
+    reservations = db.scalars(select(Reservation).order_by(Reservation.id)).all()
+    return reservations
