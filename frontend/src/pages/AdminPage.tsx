@@ -1,5 +1,5 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
-import { api, formatDollars, type Apartment, type NewApartment } from '../api.ts'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { api, formatDollars, type Apartment, type NewApartment, type Reservation } from '../api.ts'
 
 /**
  * ADMIN TEAM: the staff back office. It can be ugly.
@@ -17,7 +17,25 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false)
   const [added, setAdded] = useState<Apartment | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [reservations, setReservations] = useState<Reservation[]>([])
+  const [loadingReservations, setLoadingReservations] = useState(true)
+  const [reservationsError, setReservationsError] = useState<string | null>(null)
 
+  async function loadReservations() {
+    setLoadingReservations(true)
+    setReservationsError(null)
+    try {
+      setReservations(await api<Reservation[]>('/admin/reservations'))
+    } catch (err) {
+      setReservationsError((err as Error).message)
+    } finally {
+      setLoadingReservations(false)
+    }
+  }
+
+  useEffect(() => {
+    loadReservations()
+  }, [])
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setSaving(true)
@@ -118,6 +136,43 @@ export default function AdminPage() {
         </p>
       )}
       {error && <p className="mt-4 font-semibold text-brand">Couldn't add it: {error}</p>}
+      <h2 className="mt-10 text-2xl font-bold tracking-tight">Reservations</h2>
+      <button
+        onClick={loadReservations}
+        className="mt-2 text-sm font-semibold underline"
+      >
+        Refresh
+      </button>
+
+      {loadingReservations ? (
+        <p className="mt-4">Loading…</p>
+      ) : reservationsError ? (
+        <p className="mt-4 font-semibold text-brand">Couldn't load reservations: {reservationsError}</p>
+      ) : reservations.length === 0 ? (
+        <p className="mt-4">No reservations yet.</p>
+      ) : (
+          <table className="mt-4 border-2 border-ink bg-paper text-sm">
+          <thead>
+            <tr>
+              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on'].map((h) => (
+                <th key={h} className="border border-line px-3 py-2 text-left">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {reservations.map((r) => (
+              <tr key={r.id}>
+                <td className="border border-line px-3 py-2">{r.student_name}</td>
+                <td className="border border-line px-3 py-2">{r.student_email}</td>
+                <td className="border border-line px-3 py-2">#{r.apartment_id}</td>
+                <td className="border border-line px-3 py-2">{r.status}</td>
+                <td className="border border-line px-3 py-2">{r.deposit ? 'Yes' : 'No'}</td>
+                <td className="border border-line px-3 py-2">{new Date(r.created_at).toLocaleDateString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
   )
 }

@@ -52,12 +52,15 @@ def remove_apartment(apartment_id: int, db: DbSession):
 
 @router.get("/admin/reservations", response_model=list[ReservationOut])
 def list_reservations(db: DbSession):
-    """Staff: show me all reservations, newest first."""
-    return db.scalars(
+    """Staff: show me all reservations."""
+    # selectinload gets each reservation's apartment and deposit in the same trip
+    # to the database, since ReservationOut includes both.
+    reservations = db.scalars(
         select(Reservation)
         .options(selectinload(Reservation.apartment), selectinload(Reservation.deposit))
-        .order_by(Reservation.created_at.desc(), Reservation.id.desc())
+        .order_by(Reservation.id)
     ).all()
+    return reservations
 
 
 def _get_for_update(db: DbSession, reservation_id: int) -> Reservation:
