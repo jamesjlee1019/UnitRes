@@ -41,7 +41,7 @@ class ApartmentUpdate(BaseModel):
     number: str | None = Field(default=None, min_length=1, max_length=20)
     building: str | None = Field(default=None, min_length=1, max_length=100)
     bedrooms: int | None = Field(default=None, ge=0, le=10)
-    price_cents: int | None = Field(default=None, gt=0)
+    price_cents: int | None = Field(default=None, gt=0, le=10_000_000)  # same cap as above
     available: bool | None = Field(default=None, examples=[False])
 
 

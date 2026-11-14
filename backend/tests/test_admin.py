@@ -59,3 +59,27 @@ def test_rent_over_the_limit_is_rejected():
     # $30 million a month. This used to crash the API instead of returning an error.
     unit = {**make_unit(), "price_cents": 3_000_000_000}
     assert client.post("/admin/apartments", json=unit).status_code == 422
+
+
+def test_renaming_a_unit_to_one_that_exists_is_rejected():
+    unit = make_unit()
+    other = make_unit()
+    try:
+        assert client.post("/admin/apartments", json=unit).status_code == 201
+        other_id = client.post("/admin/apartments", json=other).json()["id"]
+
+        renamed = client.patch(f"/admin/apartments/{other_id}", json={"number": unit["number"]})
+        assert renamed.status_code == 409
+    finally:
+        delete_test_units(unit["number"])
+        delete_test_units(other["number"])
+
+
+def test_editing_rent_over_the_limit_is_rejected():
+    unit = make_unit()
+    try:
+        unit_id = client.post("/admin/apartments", json=unit).json()["id"]
+        too_much = client.patch(f"/admin/apartments/{unit_id}", json={"price_cents": 3_000_000_000})
+        assert too_much.status_code == 422
+    finally:
+        delete_test_units(unit["number"])

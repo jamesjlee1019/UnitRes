@@ -62,7 +62,15 @@ def update_apartment(apartment_id: int, changes: ApartmentUpdate, db: DbSession)
     # so a field sent as null is skipped too.
     for field, value in changes.model_dump(exclude_none=True).items():
         setattr(apartment, field, value)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # Renamed it to a unit number its building already has
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=f"{apartment.building} already has a unit {apartment.number}.",
+        )
     return apartment
 
 
