@@ -13,8 +13,8 @@ placeholder deposit ("BEFORE-ENTRATA-<id>", $0) so they keep their unit.
 If a unique index fails to build, your local database has two confirmed reservations
 for the same apartment. Run "docker compose down -v" and "docker compose up" to reset it.
 
-Revision ID: 0002
-Revises: 0001
+Revision ID: 0003
+Revises: 0002
 """
 
 from collections.abc import Sequence
@@ -23,8 +23,8 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "0002"
-down_revision: str | None = "0001"
+revision: str = "0003"
+down_revision: str | None = "0002"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

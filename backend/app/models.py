@@ -1,5 +1,5 @@
 """The database tables. This file is the schema from kickoff slide 4, plus what the
-Entrata handoff needs (migration 0002).
+Entrata handoff needs (migration 0003).
 
 Changing a table means editing this file AND adding a migration,
 or nobody else's database will match. See "Changing the schema" in the README.
