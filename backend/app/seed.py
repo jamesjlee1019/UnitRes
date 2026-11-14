@@ -8,7 +8,7 @@ To wipe your database and start over: docker compose down -v, then docker compos
 from sqlalchemy import func, select
 
 from app.db import SessionLocal
-from app.models import Apartment, Reservation
+from app.models import Apartment, Deposit, Reservation
 
 # The four units from the kickoff mock (slide 2)
 AVAILABLE_APARTMENTS = [
@@ -17,6 +17,9 @@ AVAILABLE_APARTMENTS = [
     dict(number="B-110", building="Building B", bedrooms=2, price_cents=89_000),
     dict(number="C-302", building="Building C", bedrooms=3, price_cents=114_000),
 ]
+
+# Has paid a deposit and hasn't reserved yet, so Reserve works for this email right away
+PAID_STUDENT_EMAIL = "paid.student@example.com"
 
 
 def seed() -> None:
@@ -38,12 +41,29 @@ def seed() -> None:
                 apartment=taken,
                 student_name="Test Student",
                 student_email="test.student@example.com",
-                paid=True,
                 status="confirmed",
+                deposit=Deposit(
+                    entrata_id="SEED-DEPOSIT-1",
+                    payer_email="test.student@example.com",
+                    amount_cents=50_000,
+                    paid_at=func.now(),
+                ),
+                entrata_unit_marked=True,
+            )
+        )
+        db.add(
+            Deposit(
+                entrata_id="SEED-DEPOSIT-2",
+                payer_email=PAID_STUDENT_EMAIL,
+                amount_cents=50_000,
+                paid_at=func.now(),
             )
         )
         db.commit()
-        print("Seed: added 5 apartments (4 available) and 1 reservation.")
+        print(
+            "Seed: added 5 apartments (4 available), 1 reservation, and a paid deposit "
+            f"for {PAID_STUDENT_EMAIL} so you can try Reserve."
+        )
 
 
 if __name__ == "__main__":

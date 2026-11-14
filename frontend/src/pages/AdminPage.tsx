@@ -5,6 +5,7 @@ import {
   type Apartment,
   type ApartmentUpdate,
   type NewApartment,
+  type Reservation,
 } from '../api.ts'
 
 /**
@@ -307,13 +308,13 @@ export default function AdminPage() {
                 <td className="border border-line px-3 py-2">{r.student_email}</td>
                 <td className="border border-line px-3 py-2">#{r.apartment_id}</td>
                 <td className="border border-line px-3 py-2">{r.status}</td>
-                <td className="border border-line px-3 py-2">{r.paid ? 'Yes' : 'No'}</td>
+                <td className="border border-line px-3 py-2">{r.deposit ? 'Yes' : 'No'}</td>
                 <td className="border border-line px-3 py-2">{new Date(r.created_at).toLocaleDateString()}</td>
                 <td className="border border-line px-3 py-2">
                   <button
                     onClick={() => handleDelete(r.id)}
-                    disabled={r.paid}
-                    title={r.paid ? 'Paid reservations must be refunded first' : ''}
+                    disabled={r.status === 'confirmed'}
+                    title={r.status === 'confirmed' ? 'Cancel this reservation before deleting it' : ''}
                     className="font-semibold text-brand underline disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     Delete
@@ -345,14 +346,4 @@ function Field(props: { label: string; children: ReactNode }) {
       {props.children}
     </label>
   )
-}
-type Reservation = {
-  id: number
-  apartment_id: number
-  student_name: string
-  student_email: string
-  paid: boolean
-  status: string
-  expires_at: string | null
-  created_at: string
 }
