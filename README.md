@@ -190,6 +190,60 @@ Give the group chat a heads-up before you merge one. If two migrations get merge
 same one, startup fails with an error about "multiple head revisions". To fix it, point the
 newer file's `down_revision` at the other one.
 
+## Getting the newest main
+
+Do this before a demo, or before starting something new, so you're running what everyone has
+merged. The commands are the same in PowerShell and in a Mac or Linux terminal.
+
+**1. Check for changes you haven't committed.**
+
+```bash
+git status
+```
+
+If it says `nothing to commit, working tree clean`, skip to step 2. If it lists files, decide
+whether you want to keep them.
+
+To keep them, set them aside. `-u` includes new files too.
+
+```bash
+git stash push -u -m "what I was working on"
+```
+
+When you want them back, go to your branch and run `git stash pop`. If `main` changed the same
+lines, git marks the conflicts in those files for you to fix.
+
+To throw them away instead (this can't be undone):
+
+```bash
+git restore .
+git clean -nd    # lists the new files it would delete
+git clean -fd    # deletes them
+```
+
+`git clean` never touches `.env`, because git ignores that file.
+
+**2. Switch to main and pull.**
+
+```bash
+git checkout main
+git pull
+git log -1 --oneline
+```
+
+The last line shows the newest commit you have. It should match the top of the
+[commits on GitHub](https://github.com/jamesjlee1019/UnitRes/commits/main).
+
+**3. Restart, so new packages and database changes get picked up.** If it's running, stop it
+with `Ctrl+C` first.
+
+```bash
+docker compose down -v    # optional: also resets your database to the sample data
+docker compose up
+```
+
+Leave out `docker compose down -v` if you want to keep the apartments and reservations you've added.
+
 ## Getting your work in
 
 ```bash
