@@ -19,17 +19,7 @@ our end, they can reserve a unit here.
 
 One deposit gets you one unit, and two people can never reserve the same one.
 
-## Where things stand
 
-Version 1 is done when all of these work on `main`:
-
-- [x] The apartments page lists the available units from the database
-- [x] The staff page adds apartments, removes them or marks them unavailable, and lists every reservation
-- [ ] A student can reserve a unit from the apartments page (the API works, the Reserve button isn't built yet)
-- [x] A reserved unit drops off the list, and the database refuses a second reservation for it, even if two people reserve at the same moment
-- [ ] The "you're reserved" email goes out on its own after a reservation (for now, a test script sends it)
-
-Open pull requests show what's in progress. When your PR finishes one of these, tick its box in the same PR.
 
 ## Run it on your laptop
 
