@@ -237,11 +237,11 @@ def test_syncing_twice_saves_each_deposit_once():
 def test_seed_lets_you_try_reserve_right_away():
     seed()
     available = client.get("/apartments").json()
-    assert len(available) == 4
+    assert len(available) == 80
 
     assert eligibility(PAID_STUDENT_EMAIL)["can_reserve"] is True
     assert reserve(available[0]["id"], PAID_STUDENT_EMAIL).status_code == 201
-    assert len(client.get("/apartments").json()) == 3
+    assert len(client.get("/apartments").json()) == 79
 
 
 def test_staff_delete_only_cancelled_reservations(units):

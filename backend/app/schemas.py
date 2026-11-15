@@ -9,7 +9,7 @@ bedrooms: -1 to POST /admin/apartments at http://localhost:8000/docs.
 If you change one of these, change the matching type in frontend/src/api.ts.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -24,6 +24,7 @@ class ApartmentOut(BaseModel):
     building: str
     bedrooms: int
     price_cents: int
+    price_max_cents: int | None = None
     available: bool
 
 
@@ -36,6 +37,7 @@ class ApartmentCreate(BaseModel):
     # At most $100,000 a month. The database column can't hold much more
     # than $21 million, so without a limit a typo crashed the API.
     price_cents: int = Field(gt=0, le=10_000_000, examples=[95000])
+    price_max_cents: int | None = Field(default=None, gt=0, le=10_000_000)
 
 
 class ApartmentUpdate(BaseModel):
@@ -45,7 +47,30 @@ class ApartmentUpdate(BaseModel):
     building: str | None = Field(default=None, min_length=1, max_length=100)
     bedrooms: int | None = Field(default=None, ge=0, le=10)
     price_cents: int | None = Field(default=None, gt=0, le=10_000_000)  # same cap as above
+    price_max_cents: int | None = Field(default=None, gt=0, le=10_000_000)
     available: bool | None = Field(default=None, examples=[False])
+
+
+class ApplicationCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(min_length=1, max_length=200)
+    email: EmailStr
+    phone: str = Field(min_length=1, max_length=30)
+    school: str = Field(min_length=1, max_length=200)
+    move_in_date: date
+
+
+class ApplicationPublic(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    email: str
+    phone: str
+    school: str
+    move_in_date: date
+    created_at: datetime
 
 
 class ReservationCreate(BaseModel):

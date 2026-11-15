@@ -35,14 +35,29 @@ export type Apartment = {
   building: string
   bedrooms: number
   price_cents: number
+  price_max_cents: number | null
   available: boolean
 }
 
 /** What the staff form sends to add an apartment */
-export type NewApartment = Omit<Apartment, 'id' | 'available'>
+export type NewApartment = Omit<Apartment, 'id' | 'available' | 'price_max_cents'> & {
+  price_max_cents?: number | null
+}
 
 /** What staff send to change an apartment. Leave out anything that isn't changing. */
 export type ApartmentUpdate = Partial<Omit<Apartment, 'id'>>
+
+export type Application = {
+  id: number
+  name: string
+  email: string
+  phone: string
+  school: string
+  move_in_date: string
+  created_at: string
+}
+
+export type NewApplication = Omit<Application, 'id' | 'created_at'>
 
 /**
  * Students pay the security deposit in JSM's Entrata first. Reserve only works once
@@ -108,4 +123,12 @@ export function formatDollars(cents: number): string {
     currency: 'USD',
     minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
   })
+}
+
+export function formatRent(apartment: Pick<Apartment, 'price_cents' | 'price_max_cents'>): string {
+  const minimum = formatDollars(apartment.price_cents)
+  if (!apartment.price_max_cents || apartment.price_max_cents === apartment.price_cents) {
+    return minimum
+  }
+  return `${minimum}–${formatDollars(apartment.price_max_cents)}`
 }

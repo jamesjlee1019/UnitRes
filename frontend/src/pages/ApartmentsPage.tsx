@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import {
   api,
-  formatDollars,
+  formatRent,
   type Apartment,
+  type Application,
   type Eligibility,
+  type NewApplication,
   type NewReservation,
   type StudentReservation,
 } from '../api.ts'
@@ -19,6 +21,16 @@ export default function ApartmentsPage() {
   const [apartments, setApartments] = useState<Apartment[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [application, setApplication] = useState<Application | null>(null)
+  const [applicationForm, setApplicationForm] = useState<NewApplication>({
+    name: '',
+    email: '',
+    phone: '',
+    school: '',
+    move_in_date: '',
+  })
+  const [applicationError, setApplicationError] = useState<string | null>(null)
+  const [submittingApplication, setSubmittingApplication] = useState(false)
   const [selectedApartmentId, setSelectedApartmentId] = useState<number | null>(null)
   const [studentName, setStudentName] = useState('')
   const [studentEmail, setStudentEmail] = useState('')
@@ -83,6 +95,26 @@ export default function ApartmentsPage() {
     setReservation(null)
     setReservationError(null)
     setApplyUrl(null)
+    setStudentEmail(application?.email ?? '')
+  }
+
+  async function submitApplication(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSubmittingApplication(true)
+    setApplicationError(null)
+    try {
+      const created = await api<Application>('/applications', {
+        method: 'POST',
+        body: JSON.stringify(applicationForm),
+      })
+      setApplication(created)
+      setStudentName(created.name)
+      setStudentEmail(created.email)
+    } catch (err) {
+      setApplicationError(err instanceof Error ? err.message : 'Could not submit your application.')
+    } finally {
+      setSubmittingApplication(false)
+    }
   }
 
   async function submitReservation(event: FormEvent<HTMLFormElement>) {
@@ -145,7 +177,7 @@ export default function ApartmentsPage() {
           Apartments that feel like home.
         </h1>
         <p className="mt-4 max-w-xl text-cream/70">
-          Paid your security deposit in JSM's application? Pick a unit here and it's yours right away.
+          Apply once, choose the apartment you want, then confirm your security deposit email.
         </p>
         <div className="mt-7 flex flex-wrap gap-6 text-sm">
           <div>
@@ -172,12 +204,83 @@ export default function ApartmentsPage() {
           <p className="mt-2 text-sm text-muted">
             {reservation.apartment.bedrooms}{' '}
             {reservation.apartment.bedrooms === 1 ? 'bedroom' : 'bedrooms'} ·{' '}
-            {formatDollars(reservation.apartment.price_cents)}/month. It's off the list, so nobody
+            {formatRent(reservation.apartment)}/month. It's off the list, so nobody
             else can reserve it.
           </p>
         </div>
       )}
 
+      {!application ? (
+        <form className="mt-8 max-w-2xl rounded-md border-2 border-line bg-paper p-6" onSubmit={submitApplication}>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand">Start your application</p>
+          <h2 className="mt-2 text-2xl font-bold">Tell us a little about yourself.</h2>
+          <p className="mt-2 text-sm text-muted">
+            Submit this general application first. You will choose an apartment next, then enter
+            the email used for your security deposit to confirm it.
+          </p>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-semibold">
+              Name
+              <input
+                className="mt-1 block w-full rounded-md border border-line bg-cream px-3 py-2 font-normal"
+                value={applicationForm.name}
+                onChange={(event) => setApplicationForm({ ...applicationForm, name: event.target.value })}
+                required
+                maxLength={200}
+              />
+            </label>
+            <label className="text-sm font-semibold">
+              Email
+              <input
+                type="email"
+                className="mt-1 block w-full rounded-md border border-line bg-cream px-3 py-2 font-normal"
+                value={applicationForm.email}
+                onChange={(event) => setApplicationForm({ ...applicationForm, email: event.target.value })}
+                required
+              />
+            </label>
+            <label className="text-sm font-semibold">
+              Phone
+              <input
+                type="tel"
+                className="mt-1 block w-full rounded-md border border-line bg-cream px-3 py-2 font-normal"
+                value={applicationForm.phone}
+                onChange={(event) => setApplicationForm({ ...applicationForm, phone: event.target.value })}
+                required
+                maxLength={30}
+              />
+            </label>
+            <label className="text-sm font-semibold">
+              School
+              <input
+                className="mt-1 block w-full rounded-md border border-line bg-cream px-3 py-2 font-normal"
+                value={applicationForm.school}
+                onChange={(event) => setApplicationForm({ ...applicationForm, school: event.target.value })}
+                required
+                maxLength={200}
+              />
+            </label>
+            <label className="text-sm font-semibold sm:col-span-2">
+              Move-in date
+              <input
+                type="date"
+                className="mt-1 block w-full rounded-md border border-line bg-cream px-3 py-2 font-normal"
+                value={applicationForm.move_in_date}
+                onChange={(event) => setApplicationForm({ ...applicationForm, move_in_date: event.target.value })}
+                required
+              />
+            </label>
+          </div>
+          {applicationError && <p className="mt-4 text-sm text-brand">{applicationError}</p>}
+          <button
+            type="submit"
+            className="mt-6 rounded-md bg-brand px-5 py-2.5 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={submittingApplication}
+          >
+            {submittingApplication ? 'Submitting…' : 'Continue to apartments'}
+          </button>
+        </form>
+      ) : (
       <div className="mt-8">
         {error ? (
           <div className="rounded-md border-2 border-brand bg-paper p-5">
@@ -275,7 +378,7 @@ export default function ApartmentsPage() {
                           {apartment.bedrooms} {apartment.bedrooms === 1 ? 'bedroom' : 'bedrooms'}
                         </p>
                         <p className="mt-1 text-xl font-semibold">
-                          {formatDollars(apartment.price_cents)}
+                          {formatRent(apartment)}
                           <span className="text-sm font-normal text-muted"> / month</span>
                         </p>
                       </div>
@@ -294,17 +397,7 @@ export default function ApartmentsPage() {
                           Use the email from your JSM application, so we can find your deposit.
                         </p>
                     <label className="block text-sm font-semibold">
-                      Name
-                      <input
-                        className="mt-1 block w-full rounded-md border border-line bg-cream px-3 py-2 font-normal"
-                        value={studentName}
-                        onChange={(event) => setStudentName(event.target.value)}
-                        required
-                        maxLength={200}
-                      />
-                    </label>
-                    <label className="block text-sm font-semibold">
-                      Email
+                      Deposit email
                       <input
                         type="email"
                         className="mt-1 block w-full rounded-md border border-line bg-cream px-3 py-2 font-normal"
@@ -352,6 +445,7 @@ export default function ApartmentsPage() {
           </>
         )}
       </div>
+      )}
     </section>
   )
 }

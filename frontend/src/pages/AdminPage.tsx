@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import {
   api,
-  formatDollars,
+  formatRent,
   type Apartment,
   type ApartmentUpdate,
   type NewApartment,
@@ -221,7 +221,7 @@ export default function AdminPage() {
       {added && (
         <p className="mt-4 font-semibold">
           Added {added.number} in {added.building} ({added.bedrooms} bed,{' '}
-          {formatDollars(added.price_cents)}/month) as apartment #{added.id}.
+          {formatRent(added)}/month) as apartment #{added.id}.
         </p>
       )}
       {error && <p className="mt-4 font-semibold text-brand">Couldn't add it: {error}</p>}
@@ -249,7 +249,7 @@ export default function AdminPage() {
                 <td className={CELL}>{apartment.number}</td>
                 <td className={CELL}>{apartment.building}</td>
                 <td className={CELL}>{apartment.bedrooms}</td>
-                <td className={CELL}>{formatDollars(apartment.price_cents)}/month</td>
+                <td className={CELL}>{formatRent(apartment)}/month</td>
                 <td className={CELL}>{apartment.available ? 'Yes' : 'No'}</td>
                 <td className={CELL}>
                   <div className="flex gap-2">
