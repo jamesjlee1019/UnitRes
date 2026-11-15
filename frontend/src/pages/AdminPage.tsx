@@ -15,6 +15,8 @@ import {
  *   The API wants the price in cents, so $950 is sent as 95000.
  *
  * Week 2: remove an apartment, and list who reserved what.
+ *   Cancel a confirmed reservation (the unit goes back on the list), then Delete it if needed.
+ *   The Entrata column shows which reservations staff still need to copy over to Entrata.
  *
  * Next: mark an apartment available or unavailable with PATCH /admin/apartments/{id}.
  */
@@ -39,6 +41,36 @@ export default function AdminPage() {
       setReservationsError((err as Error).message)
     } finally {
       setLoadingReservations(false)
+    }
+  }
+
+  // The unit goes back on the student list, and the student's deposit can reserve again
+  async function handleCancel(reservation: Reservation) {
+    const question =
+      `Cancel ${reservation.student_name}'s reservation for ${unitName(reservation)}? ` +
+      'The unit goes back on the list, and their deposit can reserve again.'
+    if (!confirm(question)) return
+    try {
+      const cancelled = await api<Reservation>(`/admin/reservations/${reservation.id}/cancel`, {
+        method: 'POST',
+      })
+      setReservations((prev) => prev.map((r) => (r.id === cancelled.id ? cancelled : r)))
+    } catch (err) {
+      alert(`Couldn't cancel: ${(err as Error).message}`)
+    }
+  }
+
+  // Staff made Entrata match this reservation, so it no longer needs attention
+  async function handleEntrataUpdated(reservation: Reservation) {
+    if (!confirm(entrataDoneQuestion(reservation))) return
+    try {
+      const updated = await api<Reservation>(
+        `/admin/reservations/${reservation.id}/entrata-updated`,
+        { method: 'POST' },
+      )
+      setReservations((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+    } catch (err) {
+      alert(`Couldn't save: ${(err as Error).message}`)
     }
   }
 
@@ -296,7 +328,7 @@ export default function AdminPage() {
           <table className="mt-4 border-2 border-ink bg-paper text-sm">
           <thead>
             <tr>
-              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on', ''].map((h) => (
+              {['Student', 'Email', 'Apartment', 'Status', 'Paid', 'Reserved on', 'Entrata', ''].map((h) => (
                 <th key={h} className="border border-line px-3 py-2 text-left">{h}</th>
               ))}
             </tr>
@@ -306,19 +338,43 @@ export default function AdminPage() {
               <tr key={r.id}>
                 <td className="border border-line px-3 py-2">{r.student_name}</td>
                 <td className="border border-line px-3 py-2">{r.student_email}</td>
-                <td className="border border-line px-3 py-2">#{r.apartment_id}</td>
+                <td className="border border-line px-3 py-2">{unitName(r)}</td>
                 <td className="border border-line px-3 py-2">{r.status}</td>
                 <td className="border border-line px-3 py-2">{r.deposit ? 'Yes' : 'No'}</td>
                 <td className="border border-line px-3 py-2">{new Date(r.created_at).toLocaleDateString()}</td>
                 <td className="border border-line px-3 py-2">
-                  <button
-                    onClick={() => handleDelete(r.id)}
-                    disabled={r.status === 'confirmed'}
-                    title={r.status === 'confirmed' ? 'Cancel this reservation before deleting it' : ''}
-                    className="font-semibold text-brand underline disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    Delete
-                  </button>
+                  {needsEntrataUpdate(r) ? (
+                    <>
+                      <span className="font-semibold text-brand">Needs update</span>
+                      <span className="block text-xs text-muted">{entrataTodo(r)}</span>
+                      <button
+                        onClick={() => handleEntrataUpdated(r)}
+                        className="mt-1 font-semibold underline"
+                      >
+                        Mark done
+                      </button>
+                    </>
+                  ) : (
+                    'Done'
+                  )}
+                </td>
+                <td className="border border-line px-3 py-2">
+                  {/* A confirmed reservation is cancelled first. Only then can it be deleted. */}
+                  {r.status === 'confirmed' ? (
+                    <button
+                      onClick={() => handleCancel(r)}
+                      className="font-semibold text-brand underline"
+                    >
+                      Cancel
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleDelete(r.id)}
+                      className="font-semibold text-brand underline"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -335,6 +391,36 @@ function fetchApartments() {
 
 const INPUT = 'mt-1 block w-full rounded border-2 border-line bg-white px-3 py-2'
 const TABLE = 'w-full border-collapse rounded-md border-2 border-ink bg-paper text-left'
+/**
+ * UnitRes can't change Entrata, so staff keep it in sync by hand:
+ *   confirmed → mark the unit as taken in Entrata, so nobody leases it on jsmliving.com
+ *   cancelled → put the unit back on the market in Entrata
+ * entrata_unit_marked says whether Entrata currently shows the unit as taken.
+ */
+function needsEntrataUpdate(reservation: Reservation): boolean {
+  return reservation.status === 'confirmed'
+    ? !reservation.entrata_unit_marked
+    : reservation.entrata_unit_marked
+}
+
+function entrataTodo(reservation: Reservation): string {
+  return reservation.status === 'confirmed'
+    ? 'Mark it as taken in Entrata'
+    : 'Put it back on the market in Entrata'
+}
+
+function entrataDoneQuestion(reservation: Reservation): string {
+  const unit = unitName(reservation)
+  return reservation.status === 'confirmed'
+    ? `Have you marked ${unit} as taken in Entrata?`
+    : `Have you put ${unit} back on the market in Entrata?`
+}
+
+/** "Building A, unit A-101" */
+function unitName(reservation: Reservation): string {
+  return `${reservation.apartment.building}, unit ${reservation.apartment.number}`
+}
+
 const CELL = 'border-b border-line px-3 py-2'
 const ROW_BUTTON =
   'whitespace-nowrap rounded border-2 border-ink px-3 py-1 text-sm font-semibold hover:bg-ink hover:text-white disabled:opacity-50'
