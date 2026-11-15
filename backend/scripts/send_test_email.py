@@ -19,7 +19,10 @@ from app.notifications import send_reservation_confirmation
 def main() -> None:
     if len(sys.argv) != 2:
         sys.exit("Usage: python scripts/send_test_email.py you@stanford.edu")
-    send_reservation_confirmation(sys.argv[1])
+    if send_reservation_confirmation(sys.argv[1]):
+        print(f"Sent. Check {sys.argv[1]}.")
+    else:
+        sys.exit("Not sent. See the message above.")
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@ export default function App() {
               to={to}
               end
               className={({ isActive }) =>
-                isActive ? 'font-semibold text-brand' : 'text-muted hover:text-ink'
+                isActive ? 'font-semibold text-brand-ink' : 'text-muted hover:text-ink'
               }
             >
               {label}

@@ -39,7 +39,7 @@ export default function HomePage() {
 
   return (
     <div>
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand">Week 1 · everyone</p>
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand-ink">Week 1 · everyone</p>
       <h1 className="mt-2 text-4xl font-bold tracking-tight sm:text-5xl">Setup check</h1>
       <p className="mt-3 max-w-2xl text-muted">
         If all three rows have a check mark, the project runs on your laptop. That's everyone's
@@ -86,7 +86,7 @@ export default function HomePage() {
 
 const ICONS: Record<Status, { symbol: string; style: string }> = {
   ok: { symbol: '✓', style: 'bg-emerald-600 text-white' },
-  problem: { symbol: '✕', style: 'bg-brand text-white' },
+  problem: { symbol: '✕', style: 'bg-danger text-white' },
   checking: { symbol: '…', style: 'bg-line text-muted' },
 }
 
@@ -113,7 +113,7 @@ function TeamCard({ name }: { name: TeamName }) {
   const { goal, files, page, command } = TEAMS[name]
   return (
     <div className="flex flex-col rounded-md border-2 border-ink bg-paper p-5">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand">{name}</p>
+      <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand-ink">{name}</p>
       <p className="mt-2 font-semibold">{goal}</p>
       <p className="mt-4 text-sm text-muted">Start in</p>
       <ul className="mt-1 space-y-0.5 font-mono text-xs break-all">
@@ -123,7 +123,7 @@ function TeamCard({ name }: { name: TeamName }) {
       </ul>
       <div className="mt-auto pt-5 text-sm">
         {page && (
-          <Link className="font-semibold text-brand hover:text-brand-dark" to={page}>
+          <Link className="font-semibold text-brand-ink hover:text-ink" to={page}>
             Open the page →
           </Link>
         )}
