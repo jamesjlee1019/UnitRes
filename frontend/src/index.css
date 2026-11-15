@@ -1,15 +1,23 @@
 @import "tailwindcss";
 
-/* Colors from the kickoff deck. Use them like any Tailwind color:
-   bg-cream, text-ink, bg-brand, border-line, text-muted, and so on. */
+/* Colors. Use them like any Tailwind color:
+   bg-cream, text-ink, bg-brand, border-line, text-muted, and so on.
+
+   brand is the green from the JSM Living logo. It's light, so:
+   - buttons filled with bg-brand use text-ink, not text-white (white is hard to read on it)
+   - green text on the cream background uses text-brand-ink, which is dark enough to read
+     (on a dark bg-ink background, plain text-brand reads fine)
+   - errors use text-danger / border-danger, so they don't look like success messages */
 @theme {
   --color-cream: #f3eee6;
   --color-paper: #faf8f3;
   --color-ink: #1c1a17;
   --color-muted: #6b665e;
   --color-line: #d9d2c5;
-  --color-brand: #ff5a1f;
-  --color-brand-dark: #d9440f;
+  --color-brand: #a1c75e;
+  --color-brand-dark: #8cb446;
+  --color-brand-ink: #4a6b1c;
+  --color-danger: #b42318;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 

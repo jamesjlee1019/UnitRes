@@ -41,7 +41,7 @@ Press `Ctrl+C` to stop. After the first time, `docker compose up` starts in seco
 | Open this | To see |
 | --- | --- |
 | [localhost:3000](http://localhost:3000) | The setup check |
-| [localhost:3000/apartments](http://localhost:3000/apartments) | The available apartments |
+| [localhost:3000/apartments](http://localhost:3000/apartments) | The available apartments, and reserving one |
 | [localhost:3000/admin](http://localhost:3000/admin) | The staff page |
 | [localhost:8000/docs](http://localhost:8000/docs) | Every API endpoint, and you can try each one |
 
@@ -61,10 +61,10 @@ To start over with fresh sample data, run `docker compose down -v`, then `docker
 ### Trying it without real money
 
 While we're building, the app talks to a pretend version of Entrata, so nobody pays anything.
-Open [localhost:8000/docs](http://localhost:8000/docs):
 
-- **Reserve a unit:** use `POST /reservations` with `paid.student@example.com`.
-- **Pretend someone new paid:** use `POST /dev/entrata/payments` with any email. That email can then reserve.
+- **Reserve a unit:** on [localhost:3000/apartments](http://localhost:3000/apartments), enter `paid.student@example.com` and press Check my deposit.
+- **Pretend someone new paid:** at [localhost:8000/docs](http://localhost:8000/docs), use `POST /dev/entrata/payments` with any email. That email can then reserve.
+- **Get the email:** put the SendGrid lines in `.env` (see Keys) and reserve with an inbox you can check.
 
 ## Teams
 
@@ -172,6 +172,10 @@ cp .env.example .env
 
 Fill in your team's lines, then restart (`Ctrl+C`, then `docker compose up`).
 Git ignores `.env`, so your keys stay on your laptop. Don't paste them in the group chat.
+
+With `SENDGRID_API_KEY` and `FROM_EMAIL` set, every confirmed reservation emails the student
+"you're reserved" with the Calendly link. That's the only email the app sends. Without the keys,
+reserving still works and `docker compose logs api` says the email was skipped.
 
 ## Changing the database
 

@@ -180,9 +180,9 @@ export default function ApartmentsPage() {
 
       <div className="mt-8">
         {error ? (
-          <div className="rounded-md border-2 border-brand bg-paper p-5">
+          <div className="rounded-md border-2 border-danger bg-paper p-5">
             <p>Could not load apartments: {error}</p>
-            <button type="button" className="mt-3 font-semibold text-brand underline" onClick={() => void loadApartments()}>
+            <button type="button" className="mt-3 font-semibold text-brand-ink underline" onClick={() => void loadApartments()}>
               Try again
             </button>
           </div>
@@ -203,7 +203,7 @@ export default function ApartmentsPage() {
                 <label className="min-w-0 flex-1">
                   <span className="sr-only">Search apartments</span>
                   <input
-                    className="w-full rounded-md border border-line bg-cream px-3 py-2.5 outline-none ring-brand placeholder:text-muted focus:ring-2"
+                    className="w-full rounded-md border border-line bg-cream px-3 py-2.5 outline-none ring-brand-ink placeholder:text-muted focus:ring-2"
                     placeholder="Search by building or unit…"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
@@ -212,7 +212,7 @@ export default function ApartmentsPage() {
                 <label>
                   <span className="sr-only">Filter by bedrooms</span>
                   <select
-                    className="w-full rounded-md border border-line bg-cream px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand"
+                    className="w-full rounded-md border border-line bg-cream px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-ink"
                     value={bedroomFilter}
                     onChange={(event) => setBedroomFilter(event.target.value)}
                   >
@@ -227,7 +227,7 @@ export default function ApartmentsPage() {
                 <label>
                   <span className="sr-only">Sort apartments</span>
                   <select
-                    className="w-full rounded-md border border-line bg-cream px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand"
+                    className="w-full rounded-md border border-line bg-cream px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-ink"
                     value={sortBy}
                     onChange={(event) => setSortBy(event.target.value)}
                   >
@@ -240,7 +240,7 @@ export default function ApartmentsPage() {
               <p className="mt-3 text-sm text-muted">
                 Showing {visibleApartments.length} of {apartments.length} available apartments
                 {(search || bedroomFilter !== 'all') && (
-                  <button type="button" className="ml-2 font-semibold text-brand underline" onClick={clearFilters}>
+                  <button type="button" className="ml-2 font-semibold text-brand-ink underline" onClick={clearFilters}>
                     Clear filters
                   </button>
                 )}
@@ -250,7 +250,7 @@ export default function ApartmentsPage() {
             {visibleApartments.length === 0 ? (
               <div className="mt-4 rounded-md border-2 border-line bg-paper p-8 text-center">
                 <p className="text-lg font-semibold">No apartments match those filters.</p>
-                <button type="button" className="mt-3 font-semibold text-brand underline" onClick={clearFilters}>
+                <button type="button" className="mt-3 font-semibold text-brand-ink underline" onClick={clearFilters}>
                   Show all apartments
                 </button>
               </div>
@@ -260,7 +260,7 @@ export default function ApartmentsPage() {
                   <article key={apartment.id} className="group rounded-md border-2 border-ink bg-paper p-5 transition-shadow hover:shadow-[5px_5px_0_#1c1a17]">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand">
+                        <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand-ink">
                           {apartment.building}
                         </p>
                         <h2 className="mt-2 text-2xl font-bold">Unit {apartment.number}</h2>
@@ -281,7 +281,7 @@ export default function ApartmentsPage() {
                       </div>
                       <button
                         type="button"
-                        className="rounded-md bg-brand px-4 py-2 font-semibold text-white transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-md bg-brand px-4 py-2 font-semibold text-ink transition-colors hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={() => startReservation(apartment.id)}
                         disabled={reserving}
                       >
@@ -314,7 +314,7 @@ export default function ApartmentsPage() {
                       />
                     </label>
                     {reservationError && (
-                      <p className="text-sm text-brand">
+                      <p className="text-sm text-danger">
                         {reservationError}
                         {applyUrl && (
                           <>
