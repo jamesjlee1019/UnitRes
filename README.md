@@ -47,11 +47,12 @@ Press `Ctrl+C` to stop. After the first time, `docker compose up` starts in seco
 
 The `/checkout` page is left over from the Stripe plan and isn't used anymore.
 
-### Sample data
+### Rate-sheet data
 
-Your database starts with five apartments. Four are available, and one (B-215) is already
-reserved by a test student. So the apartments page should show four, and the staff page
-should show one reservation.
+The database starts with the 2027-2028 rate-sheet listings. The sheet groups listings by
+address and bedroom count rather than individual unit numbers, so the page shows the address
+and floor-plan label (for example, `105 E. Chalmers — Studio`). Every listing is marked
+available for now. Ranged rents are displayed in full, such as `$900–$960/month`.
 
 There's also one student who has already paid a deposit, `paid.student@example.com`, so you
 can try reserving right away.

@@ -12,7 +12,7 @@ from app.config import settings
 from app.db import DbSession
 from app.jobs import start_entrata_sync
 from app.models import Apartment
-from app.routers import admin, booking, dev, payments
+from app.routers import admin, applications, booking, dev, payments
 
 # Importing it turns on the "you're reserved" email (it listens for reservation_confirmed)
 from app import notifications  # noqa: F401
@@ -37,6 +37,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(title="JSM UnitRes API", lifespan=lifespan)
 
 app.include_router(booking.router)
+app.include_router(applications.router)
 app.include_router(payments.router)
 app.include_router(admin.router)
 if settings.entrata_mode == "fake":

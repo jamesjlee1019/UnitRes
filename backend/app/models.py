@@ -5,7 +5,7 @@ Changing a table means editing this file AND adding a migration,
 or nobody else's database will match. See "Changing the schema" in the README.
 """
 
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     CheckConstraint,
@@ -14,6 +14,7 @@ from sqlalchemy import (
     Index,
     String,
     UniqueConstraint,
+    Date,
     false,
     func,
     text,
@@ -36,11 +37,26 @@ class Apartment(Base):
     building: Mapped[str] = mapped_column(String(100))  # "Building A"
     bedrooms: Mapped[int]
     price_cents: Mapped[int]  # monthly rent in cents, so 72500 means $725.00
+    price_max_cents: Mapped[int | None] = mapped_column(nullable=True)
     # Staff's switch for "this unit is on the market". A unit with a confirmed
     # reservation also drops off the student list, even when this is True.
     available: Mapped[bool] = mapped_column(default=True, server_default=true())
 
     reservations: Mapped[list["Reservation"]] = relationship(back_populates="apartment")
+
+
+class Application(Base):
+    __tablename__ = "applications"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    email: Mapped[str] = mapped_column(String(320), index=True)
+    phone: Mapped[str] = mapped_column(String(30))
+    school: Mapped[str] = mapped_column(String(200))
+    move_in_date: Mapped[date] = mapped_column(Date)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class Deposit(Base):
