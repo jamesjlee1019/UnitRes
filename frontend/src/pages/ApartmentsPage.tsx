@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Link } from 'react-router'
 import {
   api,
   formatDollars,
   type Apartment,
+  type ApplicationProfile,
   type Eligibility,
   type NewReservation,
   type StudentReservation,
@@ -30,6 +32,9 @@ export default function ApartmentsPage() {
   const [search, setSearch] = useState('')
   const [bedroomFilter, setBedroomFilter] = useState('all')
   const [sortBy, setSortBy] = useState('price-asc')
+  const [groupBy, setGroupBy] = useState<'building' | 'property'>('building')
+  const [roommateNames, setRoommateNames] = useState<string[]>([])
+  const [application, setApplication] = useState<ApplicationProfile | null>(null)
 
   async function loadApartments() {
     setLoading(true)
@@ -44,6 +49,18 @@ export default function ApartmentsPage() {
   }
 
   useEffect(() => {
+    const savedApplication = sessionStorage.getItem('unitres.application')
+    if (savedApplication) {
+      try {
+        const profile = JSON.parse(savedApplication) as ApplicationProfile
+        setApplication(profile)
+        setStudentName(profile.applicantName)
+        setStudentEmail(profile.email)
+        setRoommateNames(profile.roommateNames)
+      } catch {
+        sessionStorage.removeItem('unitres.application')
+      }
+    }
     api<Apartment[]>('/apartments')
       .then(setApartments)
       .catch((err: Error) => setError(err.message))
@@ -56,7 +73,9 @@ export default function ApartmentsPage() {
       .filter((apartment) => {
         const matchesSearch =
           !normalizedSearch ||
-          `${apartment.building} ${apartment.number}`.toLowerCase().includes(normalizedSearch)
+          `${apartment.property ?? ''} ${apartment.building} ${apartment.number}`
+            .toLowerCase()
+            .includes(normalizedSearch)
         const matchesBedrooms =
           bedroomFilter === 'all' || apartment.bedrooms === Number(bedroomFilter)
         return matchesSearch && matchesBedrooms
@@ -67,6 +86,18 @@ export default function ApartmentsPage() {
         return a.price_cents - b.price_cents
       })
   }, [apartments, bedroomFilter, search, sortBy])
+
+  const groupedApartments = useMemo(() => {
+    const groups = new Map<string, Apartment[]>()
+    visibleApartments.forEach((apartment) => {
+      const groupName =
+        groupBy === 'property' ? apartment.property?.trim() || apartment.building : apartment.building
+      const group = groups.get(groupName) ?? []
+      group.push(apartment)
+      groups.set(groupName, group)
+    })
+    return [...groups.entries()]
+  }, [groupBy, visibleApartments])
 
   const bedroomOptions = [...new Set(apartments.map(({ bedrooms }) => bedrooms))].sort(
     (a, b) => a - b,
@@ -83,6 +114,11 @@ export default function ApartmentsPage() {
     setReservation(null)
     setReservationError(null)
     setApplyUrl(null)
+    setRoommateNames([])
+  }
+
+  function updateRoommate(index: number, value: string) {
+    setRoommateNames((current) => current.map((name, currentIndex) => currentIndex === index ? value : name))
   }
 
   async function submitReservation(event: FormEvent<HTMLFormElement>) {
@@ -93,6 +129,16 @@ export default function ApartmentsPage() {
       apartment_id: selectedApartmentId,
       student_name: studentName.trim(),
       student_email: studentEmail.trim(),
+    }
+    const names = [request.student_name, ...roommateNames.map((name) => name.trim()).filter(Boolean)]
+    const duplicateName = names.find((name, index) =>
+      names.slice(0, index).some((previous) => previous.toLowerCase() === name.toLowerCase()),
+    )
+    if (duplicateName) {
+      setReservationError(
+        `"${duplicateName}" is listed more than once. Each roommate can only have one reservation name.`,
+      )
+      return
     }
     setReserving(true)
     setReservationError(null)
@@ -179,6 +225,15 @@ export default function ApartmentsPage() {
       )}
 
       <div className="mt-8">
+        {!application && (
+          <div className="mb-5 rounded-md border-2 border-brand bg-paper p-4">
+            <p className="font-semibold">Start with the general application</p>
+            <p className="mt-1 text-sm text-muted">Add your applicant and roommate details before selecting a home.</p>
+            <Link className="mt-2 inline-block font-semibold text-brand underline" to="/">
+              Open general application
+            </Link>
+          </div>
+        )}
         {error ? (
           <div className="rounded-md border-2 border-brand bg-paper p-5">
             <p>Could not load apartments: {error}</p>
@@ -236,6 +291,17 @@ export default function ApartmentsPage() {
                     <option value="bedrooms">Most bedrooms</option>
                   </select>
                 </label>
+                <label>
+                  <span className="sr-only">Group apartments by</span>
+                  <select
+                    className="w-full rounded-md border border-line bg-cream px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand"
+                    value={groupBy}
+                    onChange={(event) => setGroupBy(event.target.value as 'building' | 'property')}
+                  >
+                    <option value="building">Group by building</option>
+                    <option value="property">Group by property</option>
+                  </select>
+                </label>
               </div>
               <p className="mt-3 text-sm text-muted">
                 Showing {visibleApartments.length} of {apartments.length} available apartments
@@ -256,20 +322,29 @@ export default function ApartmentsPage() {
               </div>
             ) : (
               <div className="mt-4 grid items-start gap-5 sm:grid-cols-2">
-                {visibleApartments.map((apartment) => (
-                  <article key={apartment.id} className="group rounded-md border-2 border-ink bg-paper p-5 transition-shadow hover:shadow-[5px_5px_0_#1c1a17]">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand">
-                          {apartment.building}
-                        </p>
-                        <h2 className="mt-2 text-2xl font-bold">Unit {apartment.number}</h2>
-                      </div>
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                        Available
+                {groupedApartments.map(([groupName, groupApartments]) => (
+                  <div key={groupName} className="col-span-full">
+                    <div className="mb-3 flex items-baseline justify-between">
+                      <h2 className="text-xl font-bold">{groupName}</h2>
+                      <span className="text-sm text-muted">
+                        {groupApartments.length} {groupApartments.length === 1 ? 'home' : 'homes'}
                       </span>
                     </div>
-                    <div className="mt-6 flex items-end justify-between border-t border-line pt-4">
+                    <div className="grid items-start gap-5 sm:grid-cols-2">
+                      {groupApartments.map((apartment) => (
+                        <article key={apartment.id} className="group rounded-md border-2 border-ink bg-paper p-5 transition-shadow hover:shadow-[5px_5px_0_#1c1a17]">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-mono text-xs uppercase tracking-[0.2em] text-brand">
+                                {apartment.building}
+                              </p>
+                              <h3 className="mt-2 text-2xl font-bold">Unit {apartment.number}</h3>
+                            </div>
+                            <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                              Available
+                            </span>
+                          </div>
+                          <div className="mt-6 flex items-end justify-between border-t border-line pt-4">
                       <div>
                         <p className="text-sm text-muted">
                           {apartment.bedrooms} {apartment.bedrooms === 1 ? 'bedroom' : 'bedrooms'}
@@ -287,9 +362,9 @@ export default function ApartmentsPage() {
                       >
                         Reserve
                       </button>
-                    </div>
-                    {selectedApartmentId === apartment.id && (
-                      <form className="mt-5 space-y-3 border-t border-line pt-5" onSubmit={submitReservation}>
+                          </div>
+                          {selectedApartmentId === apartment.id && (
+                            <form className="mt-5 space-y-3 border-t border-line pt-5" onSubmit={submitReservation}>
                         <p className="text-sm font-semibold">
                           Use the email from your JSM application, so we can find your deposit.
                         </p>
@@ -313,6 +388,37 @@ export default function ApartmentsPage() {
                         required
                       />
                     </label>
+                    <div>
+                      <p className="text-sm font-semibold">Roommates <span className="font-normal text-muted">(optional)</span></p>
+                      <p className="mt-1 text-xs text-muted">Add each roommate once. Duplicate names cannot be submitted.</p>
+                      <div className="mt-2 space-y-2">
+                        {roommateNames.map((name, index) => (
+                          <div key={index} className="flex gap-2">
+                            <input
+                              className="min-w-0 flex-1 rounded-md border border-line bg-cream px-3 py-2 font-normal"
+                              placeholder={`Roommate ${index + 1} name`}
+                              value={name}
+                              onChange={(event) => updateRoommate(index, event.target.value)}
+                              maxLength={200}
+                            />
+                            <button
+                              type="button"
+                              className="px-2 text-sm text-muted hover:text-ink"
+                              onClick={() => setRoommateNames((current) => current.filter((_, currentIndex) => currentIndex !== index))}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        className="mt-2 text-sm font-semibold text-brand underline"
+                        onClick={() => setRoommateNames((current) => [...current, ''])}
+                      >
+                        + Add roommate
+                      </button>
+                    </div>
                     {reservationError && (
                       <p className="text-sm text-brand">
                         {reservationError}
@@ -343,9 +449,12 @@ export default function ApartmentsPage() {
                         Cancel
                       </button>
                     </div>
-                  </form>
-                    )}
-                  </article>
+                            </form>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

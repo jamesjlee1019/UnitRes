@@ -6,10 +6,9 @@ import CheckoutSuccessPage from './pages/CheckoutSuccessPage.tsx'
 import HomePage from './pages/HomePage.tsx'
 
 const NAV_LINKS = [
-  { to: '/', label: 'Setup check' },
+  { to: '/', label: 'General application' },
   { to: '/apartments', label: 'Apartments' },
-  { to: '/checkout', label: 'Checkout' },
-  { to: '/admin', label: 'Staff' },
+  { to: '/setup', label: 'Setup' },
 ]
 
 export default function App() {
@@ -37,6 +36,7 @@ export default function App() {
         {/* Adding a page? Make it in src/pages/ and add a <Route> for it here. */}
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/setup" element={<HomePage setupOnly />} />
           <Route path="/apartments" element={<ApartmentsPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/success" element={<CheckoutSuccessPage />} />

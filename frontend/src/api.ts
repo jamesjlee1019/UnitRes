@@ -33,6 +33,8 @@ export type Apartment = {
   id: number
   number: string
   building: string
+  /** Present when the portfolio feed includes a property separate from a building. */
+  property?: string
   bedrooms: number
   price_cents: number
   available: boolean
@@ -74,6 +76,14 @@ export type NewReservation = {
   apartment_id: number
   student_name: string
   student_email: string
+}
+
+export type ApplicationProfile = {
+  applicantName: string
+  email: string
+  phone: string
+  moveInDate: string
+  roommateNames: string[]
 }
 
 /** A full reservation, for the staff page (GET /admin/reservations) */
